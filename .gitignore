@@ -1,0 +1,47 @@
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+## Intermediate documents:
+*.dvi
+*.xdv
+*-converted-to.*
+# most people might want to keep the PDF if they are using it for sharing
+# but generally, it's a build artifact.
+# *.pdf
+
+## Bibliography auxiliary files (bibtex/biblatex/biber):
+*.bbl
+*.bcf
+*.blg
+-blx.bib
+*.run.xml
+
+## Build tool auxiliary files:
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.pdfsync
+
+## Listing auxiliary files:
+*.listing
+
+## TeXStudio:
+*.pdm
+
+## VS Code LaTeX Workshop:
+.vscode/
+
+## macOS:
+.DS_Store
