@@ -172,10 +172,10 @@
     \vspace{-0.5cm}
 
     \begin{tabularx}{\textwidth}{|>{\columncolor{lightgray}}l|X|}\hline
-    \textbf{Nombre Director} & Julian Hurtado López \\\hline
+    \textbf{Nombre Director} & Julián Hurtado López \\\hline
     \textbf{Correo} & jhurtado@uao.edu.co \\\hline
-    \textbf{Nombre Codirector} &  \\\hline
-    \textbf{Correo} &  \\\hline
+    \textbf{Nombre Codirector} & Alba Marcela Herrera Trujillo  \\\hline
+    \textbf{Correo} & alba.herrera@correounivalle.edu.co  \\\hline
     \end{tabularx}
 
     \textbf{DATOS DEL ANTEPROYECTO}
@@ -183,17 +183,16 @@
     \begin{longtable}{|p{\dimexpr\textwidth-2\tabcolsep-2\arrayrulewidth}|}
         \hline
         \rowcolor{lightgray}\centering\arraybackslash\textbf{TÍTULO DEL PROYECTO} \\\hline
-        Diseño de una Arquitectura Híbrida CNN-VQC Ligera para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética
+        Evaluación de la Eficiencia de una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética en Escasez de Datos
         \\\hline
         \rowcolor{lightgray}\centering\arraybackslash\textbf{PALABRAS CLAVES/KEY WORDS} \\\hline
-        Aprendizaje Automático Cuántico, QML, Transfer Learning, Eficiencia de Datos, RMI, Tumores Cerebrales \\\hline
+        Aprendizaje Automático Cuántico,  Convolutional Neural Networks, Circuitos Cuánticos Variacionales, Hybrid Quantum-Classical Neural Networks, Tumores Cerebrales, Resonancia Magnética \\\hline
         \rowcolor{lightgray}\centering\arraybackslash\textbf{RESUMEN} \\\hline
-        El auge de las Redes Neuronales Convolucionales (CNN) ha revolucionado el diagnóstico médico asistido por computadora.
-        Sin embargo, estas arquitecturas enfrentan un desafío crítico en medicina: la dependencia de grandes volúmenes de datos etiquetados (Big Data) para evitar el sobreajuste, un recurso a menudo escaso en entornos clínicos reales (\textit{Small Data}).
-        Este proyecto investiga la viabilidad de una arquitectura híbrida cuántico-clásica para mitigar esta limitación.
-        La propuesta integra una CNN clásica como extractora de características con un Clasificador Cuántico Variacional (VQC), aprovechando el \textit{Transfer Learning} para la clasificación multiclase de patologías cerebrales (glioma, meningioma, tumor pituitario).
-        La metodología adopta un enfoque comparativo experimental. A diferencia de enfoques tradicionales centrados solo en la reducción de parámetros, este estudio contrastará el modelo híbrido frente a arquitecturas del estado del arte (EfficientNet, ResNet) evaluando específicamente la \textbf{capacidad de generalización en regímenes de pocos datos}.
-        La hipótesis central anticipa que el componente cuántico, gracias a su alta expresividad en espacios de Hilbert, permitirá obtener métricas competitivas con fracciones reducidas del dataset de entrenamiento, demostrando una ventaja en eficiencia de datos sobre los modelos puramente clásicos.
+        El auge de las Redes Neuronales Convolucionales (CNN) ha revolucionado el diagnóstico médico. Sin embargo, arquitecturas recientes se centran en maximizar la precisión utilizando grandes volúmenes de datos, ignorando la escasez de información en entornos clínicos reales (\textit{Small Data}).
+        Este proyecto investiga la viabilidad de una arquitectura híbrida cuántico-clásica para resolver esta ``paradoja de los datos''.
+        A diferencia de trabajos recientes que entrenan modelos híbridos desde cero buscando explicabilidad, esta propuesta integra \textit{Transfer Learning} (usando EfficientNet) con un Clasificador Cuántico Variacional (VQC) para mejorar la \textbf{eficiencia de datos}.
+        La metodología contrastará el modelo híbrido frente a arquitecturas del estado del arte (EfficientNet, ResNet) evaluando específicamente la capacidad de generalización al entrenar con solo el 10\%, 25\% y 50\% del dataset.
+        La hipótesis central es que el componente cuántico permite obtener métricas competitivas con fracciones reducidas de datos, superando a los modelos clásicos propensos al sobreajuste en estos escenarios.
         \\\hline
     \end{longtable}
     \setcounter{table}{0}
@@ -205,7 +204,7 @@
     \thispagestyle{empty}
     \begin{center}
         \bfseries
-        \MakeUppercase{Diseño de una Arquitectura Híbrida CNN-VQC Ligera para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
+        \MakeUppercase{Evaluación de la Eficiencia de Datos en una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
         \vspace{4cm}
         \includegraphics[scale=1.2]{Figuras/horizontal-color} \\
         \vspace{4cm}
@@ -216,7 +215,7 @@
         \MakeUppercase{FACULTAD DE INGENIERÍA Y CIENCIAS BÁSICAS} \\
         \MakeUppercase{PROGRAMA MAESTRÍA EN INTELIGENCIA ARTIFICIAL Y CIENCIA DE DATOS} \\
         SANTIAGO DE CALI \\
-        2025
+        2026
     \end{center}
 
     % PORTADA 2
@@ -224,7 +223,7 @@
     \thispagestyle{empty}
     \begin{center}
         \bfseries
-        \MakeUppercase{Diseño de una Arquitectura Híbrida CNN-VQC Ligera para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
+        \MakeUppercase{Evaluación de la Eficiencia de Datos en una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
         \vspace{2cm}
         \includegraphics[scale=1.2]{Figuras/horizontal-color} \\
         \vspace{2cm}
@@ -241,7 +240,7 @@
         \MakeUppercase{FACULTAD DE INGENIERÍA Y CIENCIAS BÁSICAS}\\
         \MakeUppercase{PROGRAMA MAESTRÍA EN INTELIGENCIA ARTIFICIAL Y CIENCIA DE DATOS}\\
         SANTIAGO DE CALI\\
-        2025
+        2026
     \end{center}
 
     \clearpage
@@ -268,14 +267,14 @@
     \vspace{-0.5cm}
     \addcontentsline{toc}{section}{INTRODUCCIÓN}
 
-    El diagnóstico por imagen es una piedra angular de la medicina moderna, siendo la Imagen por Resonancia Magnética (RMI, \textit{Magnetic Resonance Imaging}) la modalidad de referencia para la detección y caracterización de tumores cerebrales debido a su alto contraste en tejidos blandos.
+    El diagnóstico por imagen es una piedra angular de la medicina moderna, siendo la Imagen por Resonancia Magnética (MRI, \textit{Magnetic Resonance Imaging}) la modalidad de referencia para la detección y caracterización de tumores cerebrales debido a su alto contraste en tejidos blandos.
     En la última década, la Inteligencia Artificial (IA), y específicamente el Aprendizaje Profundo (DL, \textit{Deep Learning}), ha transformado este campo, permitiendo el desarrollo de sistemas de diagnóstico asistido por computador (CAD, \textit{Computer-Aided Diagnosis}) con una precisión comparable a la de expertos humanos.
     Las Redes Neuronales Convolucionales (CNN, \textit{Convolutional Neural Networks}) se han establecido como la tecnología líder para estas tareas \citep{he2016deep}.
     Sin embargo, el despliegue efectivo de estos modelos enfrenta un obstáculo significativo: la ``paradoja de los datos''.
     Mientras que las arquitecturas de vanguardia (SOTA, \textit{State of the Art}) requieren millones de imágenes para ajustar sus parámetros sin caer en el sobreajuste (\textit{overfitting}), la disponibilidad de datos médicos etiquetados de alta calidad es intrínsecamente escasa y costosa de obtener \citep{litjens2017survey, willemink2020preparing, esteva2019guide}. Esta brecha limita la aplicabilidad de modelos masivos en patologías poco frecuentes o en centros médicos con bases de datos limitadas.
 
     El Aprendizaje Automático Cuántico (QML, \textit{Quantum Machine Learning}) emerge como una frontera prometedora para abordar este problema.
-    En la actual era de dispositivos NISQ (\textit{Noisy Intermediate-Scale Quantum}), los modelos híbridos cuántico-clásicos proponen una sinergia innovadora: utilizar redes clásicas pre-entrenadas para la extracción de características robustas (Transfer Learning) y circuitos cuánticos variacionales (VQC) para el procesamiento final.
+    En la actual era de dispositivos NISQ (\textit{Noisy Intermediate-Scale Quantum})~\citep{Preskill2018,Bharti2022}, los modelos híbridos cuántico-clásicos proponen una sinergia innovadora: utilizar redes clásicas pre-entrenadas para la extracción de características robustas (Transfer Learning) y circuitos cuánticos variacionales (VQC, \textit{Variational Quantum Classifier}) para el procesamiento final.
     La hipótesis subyacente sugiere que la alta expresividad de los circuitos cuánticos en espacios de Hilbert de alta dimensión podría permitir una mejor generalización con menos datos de entrenamiento que los clasificadores clásicos tradicionales \citep{mari2020transfer, abbas2021power}.
 
     Este proyecto propone el diseño y evaluación de una arquitectura híbrida VQC-CNN aplicada a la clasificación multiclase de tumores cerebrales.
@@ -287,10 +286,10 @@
     \vspace{-0.5cm}
 
     La clasificación automatizada de imágenes médicas mediante CNNs ha alcanzado hitos significativos.
-    Autores seminales como \citet{he2016deep} sentaron las bases con arquitecturas profundas, las cuales, junto con variantes modernas optimizadas para RMI, han demostrado alta precisión.
+    Autores seminales como \citet{he2016deep} sentaron las bases con arquitecturas profundas, las cuales, junto con variantes modernas optimizadas para MRI, han demostrado alta precisión.
     Sin embargo, el paradigma actual de ``más profundo es mejor'' conlleva desafíos críticos.
     La tendencia dominante ha sido el escalado masivo de modelos. Arquitecturas estándar como ResNet-50 contienen decenas de millones de parámetros.
-    Si bien modelos más modernos como EfficientNet \citep{tan2019efficientnet} han optimizado la relación precisión-parámetros, persiste una barrera fundamental: el \textbf{Riesgo de Sobreajuste en Escenarios de Escasez de Datos}.
+    Si bien modelos más modernos como EfficientNet \citep{tan2019efficientnet} han optimizado la relación precisión-parámetros, persiste una barrera fundamental: el Riesgo de Sobreajuste en Escenarios de Escasez de Datos.
 
     El análisis de imágenes médicas se enfrenta a la disponibilidad limitada de conjuntos de datos.
     Entrenar modelos con millones de parámetros sobre datasets médicos pequeños (cientos o pocos miles de imágenes) conduce frecuentemente al sobreajuste, donde la red memoriza el ruido del entrenamiento en lugar de aprender características generalizables.
@@ -313,15 +312,14 @@
 
     \subsection{Objetivo General}
     \vspace{-0.5cm}
-    Evaluar la viabilidad y eficiencia de una arquitectura híbrida cuántico-clásica para la clasificación multiclase de tumores cerebrales por medio de RMI, comparando su desempeño frente a arquitecturas clásicas en escenarios de escasez de datos.
+    Evaluar la viabilidad y eficiencia de una arquitectura híbrida cuántico-clásica para la clasificación multiclase de tumores cerebrales por medio de MRI, comparando su desempeño frente a arquitecturas clásicas en escenarios de escasez de datos.
 
     \subsection{Objetivos Específicos}
     \vspace{-0.5cm}
     \begin{enumerate}
         \item Desarrollar una arquitectura híbrida que integre una red neuronal clásica pre-entrenada (extractor de características) con un circuito cuántico variacional (VQC) optimizado utilizando técnicas de \textit{Angle Embedding} y \textit{Strongly Entangling Layers}.
-        \item Entrenar los modelos de referencia clásicos: EfficientNet, ResNet con la base de datos seleccionada.
-        % \item Comparar el desempeño de los modelos variando progresivamente el tamaño del conjunto de entrenamiento (ej. 10\%, 25\%, 50\%, 100\% de los datos) para evaluar la viabilidad y eficiencia de la propuesta cuántica.
-        \item Comparar el desempeño y la eficiencia computacional de los modelos, variando progresivamente el tamaño del conjunto de entrenamiento e incluyendo métricas de tiempo para evaluar la viabilidad técnica de la propuesta.
+        \item Entrenar los modelos de referencia clásicos: EfficientNet, ResNet con la base de datos seleccionada.        
+        \item Analizar la eficiencia computacional de la propuesta en términos de tiempo de convergencia, número de parámetros entrenables y uso de recursos de simulación, comparándolos con modelos tradicionales de aprendizaje profundo.
     \end{enumerate}
 
     \newpage
@@ -331,38 +329,35 @@
     Este proyecto se justifica por la necesidad de democratizar el uso de IA en medicina, donde la recolección de ``Big Data'' no siempre es viable.
     Si se valida que los modelos híbridos aprenden mejor con menos datos, esto tendría un impacto directo en la capacidad de diagnosticar enfermedades raras o en la implementación de sistemas en hospitales pequeños.
    El proyecto aborda el problema desde la perspectiva del \textit{Hybrid Transfer Learning} \citep{mari2020transfer}.
-    A diferencia de intentar entrenar redes cuánticas desde cero (lo cual sufre de problemas como ``Barren Plateaus''), el uso de redes pre-entrenadas permite aprovechar la potencia de la visión clásica y combinarla con la expresividad del espacio de características cuántico.
-    Se busca evitar la generación de expectativas infundadas respecto a la supremacía cuántica actual, por el contrario, se busca cuantificar rigurosamente en qué nicho (específicamente \textit{Low-Data}) la tecnología NISQ actual puede ofrecer una ventaja tangible \citep{gupta2025systematic}.
+    A diferencia de intentar entrenar redes cuánticas desde cero (lo cual sufre de problemas como ``Barren Plateaus'', \citet{McClean2018B}), el uso de redes pre-entrenadas permite aprovechar la potencia de la visión clásica y combinarla con la expresividad del espacio de características cuántico.
+    Se pretende evitar la generación de expectativas infundadas respecto a la supremacía cuántica actual; por el contrario, el objetivo es cuantificar rigurosamente en qué nicho (específicamente \textit{Low-Data}) la tecnología NISQ actual puede ofrecer una ventaja tangible \citep{gupta2025systematic}.
 
     \textbf{Alcance:}
     \begin{enumerate}
-        \item \textbf{Tarea:} Clasificación multiclase mediante RMI (4 clases: glioma, meningioma, pituitario, no tumor).
+        \item \textbf{Tarea:} Clasificación multiclase mediante MRI (4 clases: glioma, meningioma, pituitario, no tumor).
         No se aborda la segmentación.
-        \item \textbf{Datos:} Uso exclusivo de datasets públicos de imágenes de RM, garantizando la reproducibilidad \citep{nickparvar2023dataset}.
+        \item \textbf{Datos:} Uso exclusivo de datasets públicos de MRI, garantizando la reproducibilidad \citep{nickparvar2023dataset}.
         \item \textbf{Enfoque Experimental:} Validación cruzada entrenando con fracciones del dataset total para simular escasez de datos.
         \item \textbf{Tecnología:} Implementación en simuladores cuánticos integrados con PyTorch. No se requiere hardware cuántico real, enfocándose en la validación algorítmica y de arquitectura.
     \end{enumerate}
 
-Independientemente del resultado experimental, este proyecto garantiza: 
-\begin{itemize}
-    \item \textbf{Contribución metodológica:} Protocolo reproducible de evaluación 
-de HQCNN en régimen de datos limitados
-    \item \textbf{Contribución empírica:} Caracterización cuantitativa de trade-offs 
-accuracy-tiempo-parámetros
-    \item \textbf{Contribución práctica:} Guía basada en evidencia sobre cuándo 
-considerar (o no) soluciones QML en diagnóstico médico.
-\end{itemize}
+    Independientemente del resultado experimental, este proyecto garantiza: 
+    \begin{itemize}
+        \item \textbf{Contribución metodológica:} Protocolo reproducible de evaluación de HQCNN (\textit{Hybrid Quantum-Classical Neural Networks}) en régimen de datos limitados.
+        \item \textbf{Contribución empírica:} Caracterización cuantitativa de la relación de compromiso entre precisión, tiempo y parámetros. Caracterización cuantitativa de las compensaciones entre exactitud, tiempo computacional y número de parámetros.
+        \item \textbf{Contribución práctica:} Guía basada en evidencia sobre cuándo 
+    considerar (o no) soluciones QML en diagnóstico médico.
+    \end{itemize}
 
-\newpage
-\section{ANTECEDENTES Y ESTADO DEL ARTE}
-\vspace{-0.5cm}
+    \newpage
+    \section{ANTECEDENTES Y ESTADO DEL ARTE}
+    \vspace{-0.5cm}
 
-La investigación en QML ha transitado hacia aplicaciones prácticas mediante modelos híbridos.
-    \citet{lusnig2024leveraging} demostraron eficacia en clasificación de hígado graso. Sin embargo, el estado del arte presenta desafíos.
-    Muchos estudios utilizan CNNs muy simples (ej. 2 capas) como comparativa, lo cual es una línea base débil.
-    Estudios recientes sugieren que la verdadera ventaja del QML a corto plazo no está en la velocidad, sino en la \textbf{Generalización}.
-    Modelos como HQCNN \citep{shahjalal2025hqcnn} han demostrado superioridad sobre ResNet en MedMNIST, pero raramente se comparan contra un \textit{Fine-tuned EfficientNet} en igualdad de condiciones de datos restringidos.
-    Este proyecto busca llenar ese vacío experimental.
+    La investigación en QML ha transitado hacia aplicaciones prácticas mediante modelos híbridos. \citet{lusnig2024leveraging} demostraron eficacia en clasificación de hígado graso, abriendo la puerta a aplicaciones clínicas.
+
+    Recientemente, \citet{haddou2025hqcm} presentaron el modelo HQCM-EBTC, logrando una alta precisión (96.48\%) y destacada explicabilidad mediante mapas de atención. Sin embargo, su enfoque utiliza una CNN personalizada entrenada desde cero con el dataset completo (Full Data), sin evaluar el rendimiento en escenarios de escasez de datos, que es el desafío crítico en enfermedades raras. Además, su comparación se limita a una contraparte clásica básica diseñada por los mismos autores, y no frente a estándares industriales optimizados.
+
+    Estudios recientes sugieren que la verdadera ventaja del QML a corto plazo no está en la precisión absoluta con Big Data, sino en la \textbf{Generalización con Small Data}. Modelos como HQCNN \citep{shahjalal2025hqcnn} han demostrado superioridad sobre ResNet en MedMNIST, pero existe un vacío experimental: raramente se comparan contra un \textit{Fine-tuned EfficientNet} en condiciones de datos restringidos. Este proyecto busca llenar ese vacío, evaluando si la transferencia de aprendizaje híbrida ofrece una ventaja tangible de eficiencia sobre el entrenamiento clásico convencional.
 
     \newpage
     \section{MARCO TEÓRICO}
@@ -382,8 +377,8 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
     \vspace{-0.5cm}
     Para contextualizar la eficiencia, se analizan dos familias de arquitecturas clave en la literatura:
     \begin{itemize}
-        \item \textbf{ResNet (Residual Networks):} Introducida por \citet{he2016deep}, esta arquitectura resolvió el problema de la degradación del gradiente en redes profundas mediante la introducción de "conexiones residuales". Estas permiten que el flujo de información salte capas ($x_{l+1} = F(x_l) + x_l$), facilitando el entrenamiento de modelos muy profundos (ej. ResNet-50, ResNet-101), aunque a costa de un alto número de parámetros.
-        \item \textbf{EfficientNet:} Propuesta por \citet{tan2019efficientnet}, representa el estado del arte en eficiencia clásica. Los autores demostraron que existe una relación óptima entre la profundidad ($\alpha$), el ancho ($\beta$) y la resolución ($\gamma$) de la red. Mediante un método de "Escalado Compuesto" (\textit{Compound Scaling}), EfficientNet-B0 logra un rendimiento superior a ResNet-50 con una reducción de parámetros de orden de magnitud ($\approx 5.3$ millones), sirviendo como el \textit{baseline} clásico más exigente para esta investigación.
+        \item \textbf{ResNet (Residual Networks):} Introducida por \citet{he2016deep}, esta arquitectura resolvió el problema de la degradación del gradiente en redes profundas mediante la introducción de ``conexiones residuales". Estas permiten que el flujo de información salte capas ($x_{l+1} = F(x_l) + x_l$), facilitando el entrenamiento de modelos muy profundos (ej. ResNet-50, ResNet-101), aunque a costa de un alto número de parámetros.
+        \item \textbf{EfficientNet:} Propuesta por \citet{tan2019efficientnet}, representa el estado del arte en eficiencia clásica. Los autores demostraron que existe una relación óptima entre la profundidad ($\alpha$), el ancho ($\beta$) y la resolución ($\gamma$) de la red. Mediante un método de ``Escalado Compuesto'' (\textit{Compound Scaling}), EfficientNet-B0 logra un rendimiento superior a ResNet-50 con una reducción de parámetros de orden de magnitud ($\approx 5.3$ millones), sirviendo como el \textit{baseline} clásico más exigente para esta investigación.
     \end{itemize}
 
     \begin{figure}[H]
@@ -417,48 +412,20 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
         \label{fig:vqc_scheme}
     \end{figure}
 
+    \subsubsection{Mitigación de Barren Plateaus y Estrategias de Inicialización}
+    Uno de los desafíos críticos en el entrenamiento de VQCs es el fenómeno de los \textit{Barren Plateaus}, donde el gradiente de la función de costo desaparece exponencialmente con el número de qubits $n$ \citep{McClean2018B}. Para mitigar este riesgo y evitar conclusiones erróneas sobre la capacidad del modelo, este proyecto implementará las siguientes estrategias:
+    
+    \begin{itemize}
+        \item \textbf{Inicialización por Bloques de Identidad:} Se inicializarán los parámetros del Ansatz de forma que las capas iniciales realicen una transformación cercana a la identidad. Esto garantiza que, al inicio del entrenamiento, el circuito no colapse en un estado altamente entrelazado aleatorio que anule el gradiente.
+        \item \textbf{Restricción de la Varianza de Parámetros:} En lugar de una distribución uniforme $[0, 2\pi]$, se utilizará una inicialización normal con varianza controlada, centrada en valores que favorezcan la estabilidad del gradiente en las primeras épocas.
+        \item \textbf{Uso de Observables Locales:} Se emplearán funciones de costo basadas en mediciones locales (operadores de un solo qubit) en lugar de globales, lo cual ha demostrado teóricamente suavizar el paisaje de optimización y retrasar la aparición de mesetas \citep{Cerezo2021bp}.
+    \end{itemize}
+
     \subsection{Transferencia de Aprendizaje Híbrido (Hybrid Transfer Learning)}
     \vspace{-0.5cm}
-    El modelo propuesto se basa en el esquema de \textit{Quantum Transfer Learning} formalizado por \citet{mari_qtl_2020}. En este enfoque, una red clásica pre-entrenada actúa como extractor de características, reduciendo la alta dimensionalidad de las imágenes de RM a un vector de características compacto. Este vector sirve como entrada para el VQC, que actúa como la capa clasificadora final ("Quantum Head").
+    El modelo propuesto se basa en el esquema de \textit{Quantum Transfer Learning} formalizado por \citet{mari_qtl_2020}. En este enfoque, una red clásica pre-entrenada actúa como extractor de características, reduciendo la alta dimensionalidad de las MRI a un vector de características compacto. Este vector sirve como entrada para el VQC, que actúa como la capa clasificadora final ("Quantum Head").
 
     Para entrenar este sistema híbrido de extremo a extremo (\textit{end-to-end}), es necesario calcular el gradiente de la función de costo con respecto a los parámetros cuánticos. Esto se logra mediante la "Regla de Cambio de Parámetros" (\textit{Parameter Shift Rule}), que permite evaluar el gradiente exacto de un circuito cuántico ejecutándolo con parámetros desplazados, integrándose así con el mecanismo de autogradiente de PyTorch \citep{bergholm2018pennylane}.
-
-    % \newpage
-    % \section{DISEÑO METODOLÓGICO}
-    % \vspace{-0.5cm}
-
-    % Para el cumplimiento del objetivo general de esta propuesta, se contempla el desarrollo de tres objetivos específicos, con los que se busca dar respuesta al problema identificado. Como principio metodológico se propone la revisión constante de la literatura desde el inicio hasta su culminación. A continuación, se presenta cada objetivo específico con sus respectivas actividades
-
-    % \subsection{Fase 1: Revisión Y Selección De Datos}
-    % Se utilizará el ``Brain Tumor MRI Dataset'' \citep{nickparvar2023dataset} disponible en repositorios públicos.
-    % Este dataset contiene 7,023 imágenes balanceadas en 4 clases, ideal para \textit{benchmarking}.
-    % Se aplicará preprocesamiento estándar (redimensionamiento, normalización) para garantizar la compatibilidad de los datos.
-
-    % \subsection{Fase 2: Diseño de Arquitecturas}
-    % \begin{itemize}
-    %     \item \textbf{Clásica (Baseline):} EfficientNet-B0 con una capa densa final (clasificador).
-    %     \item \textbf{Híbrida (Propuesta):} EfficientNet-B0 (con capas congeladas o fine-tuning parcial) conectada a una capa cuántica (\textit{TorchLayer} de PennyLane) que actúa como clasificador final.
-    %     La salida de la CNN se reducirá a $n$ características que serán codificadas mediante \textit{Angle Embedding}.
-    % \end{itemize}
-
-    % \subsection{Fase 3: Experimentación en Escenarios de Datos}
-    % Esta es la fase crítica.
-    % Se entrenarán ambos modelos en los siguientes subconjuntos de datos (estratificados):
-    % \begin{itemize}
-    %     \item 10\% del dataset de entrenamiento.
-    %     \item 25\% del dataset de entrenamiento.
-    %     \item 50\% del dataset de entrenamiento.
-    %     \item 100\% del dataset de entrenamiento.
-    % \end{itemize}
-
-    % \subsection{Fase 4: Evaluación}
-    % Comparación de curvas de aprendizaje (Accuracy/Loss) y métricas finales (F1-Score, Recall) en el conjunto de prueba (que se mantiene fijo).
-    % Se busca identificar el punto de cruce donde el modelo híbrido podría superar al clásico.
-
-    % \subsection{Resultados Esperados}
-    % Se espera observar que, a medida que disminuye la cantidad de datos disponibles, la degradación del rendimiento en el modelo híbrido sea menor que en el modelo clásico, evidenciando una mayor robustez.
-
-
 
     \newpage
     \section{DISEÑO METODOLÓGICO}
@@ -470,18 +437,19 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
     Esta fase técnico-constructiva tiene como fin diseñar el modelo híbrido que combine la potencia de la visión por computadora clásica con la expresividad del cómputo cuántico.
     
     \begin{itemize}
-        \item \textbf{A1. Configuración del Extractor de Características:} Se seleccionará la arquitectura \textit{EfficientNet-B0} pre-entrenada con \textit{ImageNet}. Se procederá a la congelación de las capas convolucionales para actuar como un extractor de mapas de características fijos, reduciendo la salida final a un espacio latente de baja dimensionalidad compatible con el número de qubits disponibles.
-        \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Esta actividad incluye la definición del método de \textit{Angle Embedding} para mapear las características clásicas en ángulos de rotación de los qubits, y el diseño de un \textit{Ansatz} basado en \textit{Strongly Entangling Layers} para maximizar la capacidad de representación del modelo.
+        \item \textbf{A1. Configuración del Extractor de Características (Transfer Learning):} Se seleccionará la arquitectura \textit{EfficientNet-B0} pre-entrenada con \textit{ImageNet}. A diferencia de enfoques que entrenan CNNs desde cero \citep{haddou2025hqcm}, el uso de pesos pre-entrenados es crucial para evitar el sobreajuste en escenarios de escasez de datos. Se congelarán las capas convolucionales para actuar como un extractor de características robusto, reduciendo la salida a un espacio latente compatible con el circuito cuántico.        
+        % \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Esta actividad incluye la definición del método de \textit{Angle Embedding} para mapear las características clásicas en ángulos de rotación de los qubits, y el diseño de un \textit{Ansatz} basado en \textit{Strongly Entangling Layers} para maximizar la capacidad de representación del modelo.
+
+        \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Se define preliminarmente el uso de 4 qubits, estableciendo una correspondencia directa con las 4 clases de tumores del dataset (glioma, meningioma, pituitario y no tumor). La dimensionalidad del extractor clásico se reducirá mediante una capa densa para acoplarse a este número de qubits. Para determinar la configuración óptima, se realizarán experimentos variando la profundidad del \textit{Ansatz} (\textit{Strongly Entangling Layers}) con $L \in \{2, 4, 6\}$ capas. Esta exploración permitirá cuantificar el compromiso entre la expresividad del modelo y el tiempo de simulación, buscando mitigar el riesgo de \textit{Barren Plateaus} mediante una arquitectura de baja profundidad pero alta capacidad de entrelazamiento.
+        
         \item \textbf{A3. Implementación de la Interfaz Híbrida:} Mediante el módulo \textit{TorchLayer}, se integrará el circuito cuántico como la capa final de clasificación dentro del flujo de tensores de \textit{PyTorch}, permitiendo el entrenamiento mediante el algoritmo de \textit{backpropagation} clásico y la regla de cambio de parámetro (\textit{Parameter Shift Rule}) para los gradientes cuánticos.
     \end{itemize}
-    
-    
     
     \subsection{Fase 2: Establecimiento de Líneas Base y Preparación de Datos (Objetivo Específico 2)}
     Esta fase garantiza que la comparación sea estadísticamente válida al establecer el rendimiento máximo que los modelos tradicionales pueden alcanzar con el conjunto de datos completo.
     
     \begin{itemize}
-        \item \textbf{A4. Curaduría y Auditoría del Dataset:} Se validarán las 7,023 imágenes del \textit{Brain Tumor MRI Dataset}, realizando un análisis de balanceo de clases para asegurar que el entrenamiento no presente sesgos hacia categorías predominantes (ej. no tumor vs. glioma).
+        \item \textbf{A4. Curaduría y Auditoría del Dataset:} Se validarán las 7023 imágenes del \textit{Brain Tumor MRI Dataset}, realizando un análisis de balanceo de clases para asegurar que el entrenamiento no presente sesgos hacia categorías predominantes (ej. no tumor vs. glioma).
         \item \textbf{A5. Pipeline de Preprocesamiento y Aumento:} Se diseñará un flujo de transformación que incluya redimensionamiento a 224x224 píxeles, normalización estadística y técnicas de \textit{Data Augmentation} (rotaciones leves y \textit{flips}) para fortalecer la robustez de los modelos clásicos de referencia.
         \item \textbf{A6. Benchmark Clásico (SOTA):} Se entrenarán modelos \textit{EfficientNet-B0} y \textit{ResNet-50} utilizando el 100\% del dataset. Estos resultados servirán como el límite superior de precisión contra el cual se contrastará la eficiencia del modelo cuántico en condiciones de escasez de datos.
     \end{itemize}
@@ -491,14 +459,49 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
     
     \begin{itemize}
         \item \textbf{A7. Definición de Escenarios de Escasez:} Creación de subconjuntos de datos estratificados al 10\%, 25\% y 50\% del total del dataset.
-        \item \textbf{A8. Ejecución de Pruebas de Estrés y Rigor Estadístico:} Se realizarán $n$ ejecuciones independientes (ej. $n=5$) para cada configuración de modelo y tamaño de dataset. Esto permitirá capturar la variabilidad del entrenamiento y garantizar la reproducibilidad de los hallazgos.
-        \item \textbf{A9. Evaluación Multimétrica:} Además de las métricas de clasificación (Accuracy, F1-Score), se registrará sistemáticamente el \textbf{tiempo de entrenamiento y latencia de inferencia} para discutir la viabilidad del modelo híbrido en comparación con los baselines clásicos.
+               
+        % \item \textbf{A8. Ejecución de Pruebas de Estrés y Rigor Estadístico:} Se realizarán $n$ ejecuciones independientes (ej. $n=5$) para cada configuración de modelo y tamaño de dataset. Esto permitirá capturar la variabilidad del entrenamiento y garantizar la reproducibilidad de los hallazgos.
+
+        \item \textbf{A8. Implementación de Validación Cruzada Estratificada ($k=5$):} Para asegurar la validez estadística en regímenes de escasez de datos, se aplicará un esquema de \textit{Stratified k-fold Cross-Validation} con $k=5$. Esto implica que para cada fracción de datos (10\%, 25\%, 50\%), el subconjunto se dividirá en 5 particiones que mantienen la proporción de clases original. El modelo se entrenará y validará 5 veces, permitiendo reportar la media y la desviación estándar de las métricas, mitigando así el sesgo de selección.
+        
+        % \item \textbf{A9. Evaluación Multimétrica:} Además de las métricas de clasificación (Accuracy, F1-Score), se registrará sistemáticamente el \textbf{tiempo de entrenamiento y latencia de inferencia} para discutir la viabilidad del modelo híbrido en comparación con los baselines clásicos.
+
+        \item \textbf{A9. Evaluación Multimétrica:} Se calcularán métricas de desempeño que incluyan Accuracy y F1-Score, integrando de manera explícita la sensibilidad y especificidad por clase. Dado que en el diagnóstico oncológico los falsos negativos y falsos positivos conllevan implicaciones clínicas diferenciadas (ej. la omisión de un glioma vs. la identificación errónea de un tumor pituitario), este análisis por clase permitirá evaluar la fiabilidad del modelo en un contexto médico real. Asimismo, se registrará sistemáticamente el tiempo de entrenamiento y latencia de inferencia para discutir la viabilidad del modelo híbrido.
+        
         \item \textbf{A10. Análisis Estadístico de Resultados:} Se aplicarán pruebas de \textbf{Análisis de Varianza (ANOVA)} para determinar si las diferencias de desempeño observadas entre la arquitectura HQCNN y los modelos clásicos son estadísticamente significativas, permitiendo una conclusión científica robusta sobre la ventaja cuántica.
+
+        \item \textbf{A11. Análisis Comparativo de Curvas de Aprendizaje y Brecha de Generalización:} Se realizará un monitoreo sistemático de la evolución de la función de pérdida (\textit{Loss}) y la precisión (\textit{Accuracy}) tanto en el conjunto de entrenamiento como en el de validación a lo largo de las épocas. El sobreajuste se cuantificará mediante la brecha de generalización ($G = |Acc_{train} - Acc_{val}|$). Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet/ResNet) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
+
+        \item \textbf{A12. Escritura y Documentación del Trabajo de Grado:} Redacción progresiva del documento final, integrando la revisión bibliográfica, el desglose metodológico y la síntesis de resultados y conclusiones para la entrega final al comité.
     \end{itemize}
     
     \subsection{Cronograma de Actividades}
-    La ejecución de las fases y actividades descritas se proyecta en un periodo de ocho meses (2025), permitiendo tiempos adecuados para la iteración algorítmica y la experimentación computacional.
+    La ejecución de las fases y actividades descritas se proyecta en un periodo de ocho meses (2026), permitiendo tiempos adecuados para la iteración algorítmica y la experimentación computacional.
     
+    % \begin{table}[H]
+    %     \centering
+    %     \small
+    %     \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
+    %     \hline
+    %     \rowcolor{lightgray} \centering \textbf{Actividad / Mes (2026)} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} & \textbf{6} & \textbf{7} & \textbf{8} \\ \hline
+    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 1: Arquitectura}} \\ \hline
+    %     A1. Configuración Extractor & \cellcolor{blue!20}X & & & & & & & \\ \hline
+    %     A2. Diseño VQC & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & & & \\ \hline
+    %     A3. Integración Híbrida & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & & \\ \hline
+    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 2: Benchmarking}} \\ \hline
+    %     A4. Auditoría Dataset & \cellcolor{blue!20}X & & & & & & & \\ \hline
+    %     A5. Pipeline Preprocesado & & \cellcolor{blue!20}X & & & & & & \\ \hline
+    %     A6. Entrenamiento Baselines & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & \\ \hline
+    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 3: Experimentación}} \\ \hline
+    %     A7. Estratificación Escenarios & & & & & \cellcolor{blue!20}X & & & \\ \hline
+    %     A8. Pruebas de Estrés ($n=5$) & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \\ \hline
+    %     A9. Registro de Tiempos & & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X \\ \hline
+    %     A10. Análisis ANOVA & & & & & & & & \cellcolor{blue!20}X \\ \hline
+    %     \end{tabularx}
+    %     \caption{Cronograma de actividades actualizado con rigor estadístico y múltiples baselines.}
+    %     \label{tab:cronograma}
+    % \end{table}
+
     \begin{table}[H]
         \centering
         \small
@@ -513,16 +516,17 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
         A4. Auditoría Dataset & \cellcolor{blue!20}X & & & & & & & \\ \hline
         A5. Pipeline Preprocesado & & \cellcolor{blue!20}X & & & & & & \\ \hline
         A6. Entrenamiento Baselines & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & \\ \hline
-        \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 3: Experimentación}} \\ \hline
+        \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 3: Experimentación y Documentación}} \\ \hline
         A7. Estratificación Escenarios & & & & & \cellcolor{blue!20}X & & & \\ \hline
-        A8. Pruebas de Estrés ($n=5$) & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \\ \hline
+        A8. Validación Cruzada ($k=5$) & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \\ \hline
         A9. Registro de Tiempos & & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X \\ \hline
         A10. Análisis ANOVA & & & & & & & & \cellcolor{blue!20}X \\ \hline
+        A11. Análisis de Sobreajuste & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X \\ \hline
+        A12. Escritura del Documento Final & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X \\ \hline
         \end{tabularx}
-        \caption{Cronograma de actividades actualizado con rigor estadístico y múltiples baselines.}
+        \caption{Cronograma de actividades integral: desarrollo técnico, experimentación y documentación final.}
         \label{tab:cronograma}
     \end{table}
-
 
 
 
@@ -536,28 +540,29 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
     \newpage
     \section{RECURSOS Y ASPECTOS ECONÓMICOS}
     \vspace{-0.5cm}
-
+    
     \begin{tabularx}{\textwidth}{|p{0.25\textwidth}|X|}
         \hline
-        {\textbf{TIPO DE RECURSO}} & \textbf{DESCRIPCIÓN} \\
+        \rowcolor{lightgray} \textbf{TIPO DE RECURSO} & \textbf{DESCRIPCIÓN} \\
         \hline
-        Capital Humano & \textbf{Estudiante investigador:} Frank Edward Daza Gonzalez.\\
+        Capital Humano & \textbf{Estudiante investigador:} Frank Edward Daza Gonzalez. \newline
+        \textbf{Director:} Julián Hurtado López. \newline
+        \textbf{Codirectora:} Alba Marcela Herrera Trujillo. \\
         \hline
-        Tecnologías Blandas & \textbf{Software:} Python, PyTorch, PennyLane.
-        \newline
-        \textbf{Herramientas:} Repositorios de datos públicos (Kaggle).
-        \newline
-        \textbf{Metodología:} Diseño experimental cuantitativo.
-        \\
-        Tecnologías Duras & Equipo de cómputo personal y servicios de nube (Google Colab) para simulación de circuitos cuánticos y entrenamiento de redes neuronales.
-        \\
+        Tecnologías Blandas & \textbf{Software:} Python, PyTorch, PennyLane. \newline
+        \textbf{Herramientas:} Repositorios públicos (Kaggle), \textit{Weights \& Biases} para monitoreo de sobreajuste y \textit{Overleaf Pro} para documentación. \newline
+        \textbf{Metodología:} Diseño experimental cuantitativo con validación cruzada ($k=5$). \\
         \hline
+        Tecnologías Duras & Equipo de cómputo personal y servicios de cómputo de alto rendimiento en la nube (Google Colab Pro+) para simulación de circuitos cuánticos y entrenamiento de modelos SOTA. \\
         \hline
-        Infraestructura & No se requiere laboratorio físico.
-        Trabajo remoto/local. \\
+        Infraestructura & No se requiere laboratorio físico. Modalidad de trabajo remoto utilizando servicios de almacenamiento en la nube (Google One). \\
         \hline
-        Financieros & Financiación propia.
-        Uso de recursos de acceso libre. \\
+        Financieros & \textbf{Financiación propia:} Se estima un presupuesto operativo de aproximadamente \textbf{\$704.00 USD}, desglosados en:
+        \begin{itemize}
+            \item Cómputo (Colab Pro+): \$400.00
+            \item Asistencia IA (Google AI Pro): \$160.00
+            \item Infraestructura y Escritura (Overleaf/Drive): \$144.00
+        \end{itemize} \\
         \hline
     \end{tabularx}
 
@@ -565,6 +570,6 @@ La investigación en QML ha transitado hacia aplicaciones prácticas mediante mo
     \renewcommand{\refname}{REFERENCIAS}
     \addcontentsline{toc}{section}{REFERENCIAS}
     \bibliographystyle{apalike}
-    \bibliography{Referencias}
+    \bibliography{NewReferencias}
 
 \end{document}

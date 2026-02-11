@@ -1,4 +1,4 @@
-# Design of a Lightweight Hybrid CNN-VQC Architecture for Brain Tumor Diagnosis in Magnetic Resonance Imaging
+# Evaluation of Data Efficiency in a Hybrid CNN-VQC Architecture for Brain Tumor Diagnosis in Magnetic Resonance Imaging
 
 **Author**: Frank Edward Daza Gonzalez  
 **Program**: Master in Artificial Intelligence and Data Science  
@@ -28,7 +28,7 @@ To evaluate the viability and efficiency of a hybrid quantum-classical architect
 ### Specific Objectives
 1.  **Develop a Hybrid Architecture**: Integrate a pre-trained classical neural network (feature extractor) with a Variational Quantum Classifier (VQC) optimized using *Angle Embedding* and *Strongly Entangling Layers*.
 2.  **Train Classical Baselines**: Train reference models (EfficientNet, ResNet) with the selected database.
-3.  **Comparative Evaluation**: Compare the performance and computational efficiency of the models, progressively varying the training set size (e.g., 10%, 25%, 50%, 100%) to evaluate the technical viability of the quantum proposal.
+3.  **Comparative Evaluation**: Analyze the computational efficiency of the proposal in terms of convergence time, number of trainable parameters, and simulation resource usage, comparing them with traditional deep learning models.
 
 ## 🛠️ Methodology
 
@@ -36,8 +36,11 @@ The project follows a comparative experimental approach:
 
 1.  **Hybrid Architecture (HQCNN)**:
     *   **Feature Extractor**: EfficientNet-B0 (pre-trained on ImageNet) with frozen layers.
-    *   **Quantum Classifier**: VQC implemented in **PennyLane**, using Angle Embedding and a variational ansatz.
-    *   **Integration**: Using `TorchLayer` to integrate the quantum circuit into the PyTorch workflow.
+    *   **Quantum Classifier**: VQC implemented in **PennyLane**:
+        *   **Qubits**: 4 (mapping typically to classes: Glioma, Meningioma, Pituitary, No Tumor).
+        *   **Ansatz**: Strongly Entangling Layers ($L \in \{2, 4, 6\}$) to maximize expressibility.
+        *   **Embedding**: Angle Embedding.
+    *   **Integration**: Using `TorchLayer` to integrate the quantum circuit into the PyTorch workflow (Hybrid End-to-End).
 
 2.  **Dataset**:
     *   **Source**: Public "Brain Tumor MRI Dataset".
@@ -47,6 +50,7 @@ The project follows a comparative experimental approach:
 3.  **Experimentation**:
     *   **Scenarios**: Training on 10%, 25%, 50%, and 100% of the dataset.
     *   **Metrics**: Accuracy, F1-Score, Training Time, Inference Latency.
+    *   **Validation Strategy**: Stratified k-fold Cross-Validation ($k=5$).
     *   **Statistical Analysis**: ANOVA to determine significance of results.
 
 ## 💻 Technologies
@@ -60,6 +64,7 @@ The project follows a comparative experimental approach:
 
 *   **Student**: Frank Edward Daza Gonzalez
 *   **Director**: Julian Hurtado López, PhD
+*   **Co-director**: Alba Marcela Herrera Trujillo
 
 ---
 *This repository contains the code and documentation for the Master's Thesis project.*
