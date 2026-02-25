@@ -204,7 +204,7 @@
     \thispagestyle{empty}
     \begin{center}
         \bfseries
-        \MakeUppercase{Evaluación de la Eficiencia de Datos en una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
+        \MakeUppercase{Evaluación de la Eficiencia de una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética en Escasez de Datos}\\
         \vspace{4cm}
         \includegraphics[scale=1.2]{Figuras/horizontal-color} \\
         \vspace{4cm}
@@ -223,7 +223,7 @@
     \thispagestyle{empty}
     \begin{center}
         \bfseries
-        \MakeUppercase{Evaluación de la Eficiencia de Datos en una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética}\\
+        \MakeUppercase{Evaluación de la Eficiencia de una Arquitectura Híbrida CNN-VQC para el Diagnóstico de Tumores Cerebrales en Imágenes de Resonancia Magnética en Escasez de Datos}\\
         \vspace{2cm}
         \includegraphics[scale=1.2]{Figuras/horizontal-color} \\
         \vspace{2cm}
@@ -235,6 +235,9 @@
         Director\\
         \MakeUppercase{Julian Hurtado López}\\
         Doctor en Ingeniería\\
+        Codirector\\
+        \MakeUppercase{Alba Marcela Herrera Trujillo}\\
+        Doctora en Física\\
         \vfill
         UNIVERSIDAD AUTÓNOMA DE OCCIDENTE\\
         \MakeUppercase{FACULTAD DE INGENIERÍA Y CIENCIAS BÁSICAS}\\
@@ -304,7 +307,7 @@
 
     \subsection{Pregunta de Investigación}
     \vspace{-0.5cm}
-    ¿Puede una arquitectura híbrida cuántico-clásica, basada en Transfer Learning, demostrar una capacidad de generalización superior a la de arquitecturas clásicas del estado del arte (como EfficientNet-B0) en escenarios de entrenamiento con datos limitados, manteniendo métricas de precisión competitivas?
+    ¿Puede una arquitectura híbrida cuántico-clásica, basada en Transfer Learning, demostrar una capacidad de generalización superior a la de arquitecturas clásicas del estado del arte (como EfficientNet-B0 y Resnet) en escenarios de entrenamiento en escasez de datos, manteniendo métricas competitivas?
 
     \newpage
     \section{OBJETIVOS}
@@ -312,14 +315,19 @@
 
     \subsection{Objetivo General}
     \vspace{-0.5cm}
-    Evaluar la viabilidad y eficiencia de una arquitectura híbrida cuántico-clásica para la clasificación multiclase de tumores cerebrales por medio de MRI, comparando su desempeño frente a arquitecturas clásicas en escenarios de escasez de datos.
+    Evaluar la eficiencia de una arquitectura híbrida cuántico-clásica para la clasificación multiclase de tumores cerebrales por medio de MRI, comparando su desempeño frente a arquitecturas clásicas en escenarios de escasez de datos.
 
     \subsection{Objetivos Específicos}
     \vspace{-0.5cm}
     \begin{enumerate}
-        \item Desarrollar una arquitectura híbrida que integre una red neuronal clásica pre-entrenada (extractor de características) con un circuito cuántico variacional (VQC) optimizado utilizando técnicas de \textit{Angle Embedding} y \textit{Strongly Entangling Layers}.
-        \item Entrenar los modelos de referencia clásicos: EfficientNet, ResNet con la base de datos seleccionada.        
-        \item Analizar la eficiencia computacional de la propuesta en términos de tiempo de convergencia, número de parámetros entrenables y uso de recursos de simulación, comparándolos con modelos tradicionales de aprendizaje profundo.
+        \item Desarrollar una arquitectura híbrida que integre una red neuronal clásica pre-entrenada basado en EfficientNet (extractor de características) con un circuito cuántico variacional (VQC) utilizando técnicas de \textit{Angle Embedding} y \textit{Strongly Entangling Layers}.
+        \item Entrenar los modelos de referencia clásicos: EfficientNet, ResNet estableciendo líneas base robustas mediante Transfer Learning y entrenamiento con el conjunto completo de datos.        
+        \item Analizar cuantitativamente el balance entre la exactitud del modelo propuesto y el conjunto de datos.
+        
+        
+        % Analizar la eficiencia computacional de la propuesta en términos de tiempo de convergencia, número de parámetros entrenables y uso de recursos de simulación, comparándolos con modelos tradicionales de aprendizaje profundo.
+
+        
     \end{enumerate}
 
     \newpage
@@ -344,7 +352,7 @@
     Independientemente del resultado experimental, este proyecto garantiza: 
     \begin{itemize}
         \item \textbf{Contribución metodológica:} Protocolo reproducible de evaluación de HQCNN (\textit{Hybrid Quantum-Classical Neural Networks}) en régimen de datos limitados.
-        \item \textbf{Contribución empírica:} Caracterización cuantitativa de la relación de compromiso entre precisión, tiempo y parámetros. Caracterización cuantitativa de las compensaciones entre exactitud, tiempo computacional y número de parámetros.
+        \item \textbf{Contribución empírica:} Caracterización cuantitativa del balance entre la exactitud y el conjunto de datos.
         \item \textbf{Contribución práctica:} Guía basada en evidencia sobre cuándo 
     considerar (o no) soluciones QML en diagnóstico médico.
     \end{itemize}
@@ -416,7 +424,7 @@
     Uno de los desafíos críticos en el entrenamiento de VQCs es el fenómeno de los \textit{Barren Plateaus}, donde el gradiente de la función de costo desaparece exponencialmente con el número de qubits $n$ \citep{McClean2018B}. Para mitigar este riesgo y evitar conclusiones erróneas sobre la capacidad del modelo, este proyecto implementará las siguientes estrategias:
     
     \begin{itemize}
-        \item \textbf{Inicialización por Bloques de Identidad:} Se inicializarán los parámetros del Ansatz de forma que las capas iniciales realicen una transformación cercana a la identidad. Esto garantiza que, al inicio del entrenamiento, el circuito no colapse en un estado altamente entrelazado aleatorio que anule el gradiente.
+        \item \textbf{Inicialización por Bloques de Identidad:} Se inicializarán los parámetro\textbf{}s del Ansatz de forma que las capas iniciales realicen una transformación cercana a la identidad. Esto garantiza que, al inicio del entrenamiento, el circuito no colapse en un estado altamente entrelazado aleatorio que anule el gradiente.
         \item \textbf{Restricción de la Varianza de Parámetros:} En lugar de una distribución uniforme $[0, 2\pi]$, se utilizará una inicialización normal con varianza controlada, centrada en valores que favorezcan la estabilidad del gradiente en las primeras épocas.
         \item \textbf{Uso de Observables Locales:} Se emplearán funciones de costo basadas en mediciones locales (operadores de un solo qubit) en lugar de globales, lo cual ha demostrado teóricamente suavizar el paisaje de optimización y retrasar la aparición de mesetas \citep{Cerezo2021bp}.
     \end{itemize}
@@ -466,13 +474,20 @@
         
         % \item \textbf{A9. Evaluación Multimétrica:} Además de las métricas de clasificación (Accuracy, F1-Score), se registrará sistemáticamente el \textbf{tiempo de entrenamiento y latencia de inferencia} para discutir la viabilidad del modelo híbrido en comparación con los baselines clásicos.
 
-        \item \textbf{A9. Evaluación Multimétrica:} Se calcularán métricas de desempeño que incluyan Accuracy y F1-Score, integrando de manera explícita la sensibilidad y especificidad por clase. Dado que en el diagnóstico oncológico los falsos negativos y falsos positivos conllevan implicaciones clínicas diferenciadas (ej. la omisión de un glioma vs. la identificación errónea de un tumor pituitario), este análisis por clase permitirá evaluar la fiabilidad del modelo en un contexto médico real. Asimismo, se registrará sistemáticamente el tiempo de entrenamiento y latencia de inferencia para discutir la viabilidad del modelo híbrido.
+
+        % Dado que en el diagnóstico oncológico los falsos negativos y falsos positivos conllevan implicaciones clínicas diferenciadas (ej. la omisión de un glioma vs. la identificación errónea de un tumor pituitario), este análisis por clase permitirá evaluar la fiabilidad del modelo en un contexto médico real.
+
+        \item \textbf{A9. Evaluación Multimétrica:} Se calcularán métricas de desempeño que incluyan Accuracy y F1-Score, integrando de manera explícita la sensibilidad y especificidad por clase. Adicionalmente, se registrará sistemáticamente el tiempo de entrenamiento y latencia de inferencia.
         
-        \item \textbf{A10. Análisis Estadístico de Resultados:} Se aplicarán pruebas de \textbf{Análisis de Varianza (ANOVA)} para determinar si las diferencias de desempeño observadas entre la arquitectura HQCNN y los modelos clásicos son estadísticamente significativas, permitiendo una conclusión científica robusta sobre la ventaja cuántica.
+        \item \textbf{A10. Análisis Estadístico de Resultados:} Se aplicarán pruebas de Análisis de Varianza (ANOVA) para determinar si las diferencias de desempeño observadas entre la arquitectura HQCNN y los modelos clásicos son estadísticamente significativas.
 
-        \item \textbf{A11. Análisis Comparativo de Curvas de Aprendizaje y Brecha de Generalización:} Se realizará un monitoreo sistemático de la evolución de la función de pérdida (\textit{Loss}) y la precisión (\textit{Accuracy}) tanto en el conjunto de entrenamiento como en el de validación a lo largo de las épocas. El sobreajuste se cuantificará mediante la brecha de generalización ($G = |Acc_{train} - Acc_{val}|$). Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet/ResNet) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
+        \item \textbf{A11. Análisis Comparativo de Curvas de Aprendizaje y Brecha de Generalización:} Se realizará un monitoreo sistemático de la evolución de la función de pérdida (\textit{Loss}) y la precisión (\textit{Accuracy}) tanto en el conjunto de entrenamiento como en el de validación a lo largo de las épocas. El sobreajuste se cuantificará mediante la brecha de generalización ($G = |Acc_{train} - Acc_{val}|$). 
+        
+        % Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet/ResNet) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
 
-        \item \textbf{A12. Escritura y Documentación del Trabajo de Grado:} Redacción progresiva del documento final, integrando la revisión bibliográfica, el desglose metodológico y la síntesis de resultados y conclusiones para la entrega final al comité.
+        \item \textbf{A12. Escritura y Documentación del Trabajo de Grado:} Se realizará la redacción del documento, integrando la revisión bibliográfica, el desglose metodológico, la síntesis de resultados y conclusiones.
+        
+        % Redacción progresiva del documento final, integrando la revisión bibliográfica, el desglose metodológico y la síntesis de resultados y conclusiones para la entrega final al comité.
     \end{itemize}
     
     \subsection{Cronograma de Actividades}
@@ -528,13 +543,6 @@
         \label{tab:cronograma}
     \end{table}
 
-
-
-
-
-
-
-
     
 
     \newpage
@@ -570,6 +578,6 @@
     \renewcommand{\refname}{REFERENCIAS}
     \addcontentsline{toc}{section}{REFERENCIAS}
     \bibliographystyle{apalike}
-    \bibliography{NewReferencias}
+    \bibliography{Referencias}
 
 \end{document}
