@@ -424,8 +424,8 @@
     Uno de los desafíos críticos en el entrenamiento de VQCs es el fenómeno de los \textit{Barren Plateaus}, donde el gradiente de la función de costo desaparece exponencialmente con el número de qubits $n$ \citep{McClean2018B}. Para mitigar este riesgo y evitar conclusiones erróneas sobre la capacidad del modelo, este proyecto implementará las siguientes estrategias:
     
     \begin{itemize}
-        \item \textbf{Inicialización por Bloques de Identidad:} Se inicializarán los parámetro\textbf{}s del Ansatz de forma que las capas iniciales realicen una transformación cercana a la identidad. Esto garantiza que, al inicio del entrenamiento, el circuito no colapse en un estado altamente entrelazado aleatorio que anule el gradiente.
-        \item \textbf{Restricción de la Varianza de Parámetros:} En lugar de una distribución uniforme $[0, 2\pi]$, se utilizará una inicialización normal con varianza controlada, centrada en valores que favorezcan la estabilidad del gradiente en las primeras épocas.
+        \item \textbf{Inicialización por Bloques de Identidad:} Se inicializarán los parámetros del Ansatz de forma que las capas iniciales realicen una transformación cercana a la identidad. Esto garantiza que, al inicio del entrenamiento, el circuito no colapse en un estado altamente entrelazado aleatorio que anule el gradiente \citep{grant2019initialization}.
+        \item \textbf{Restricción de la Varianza de Parámetros:} En lugar de una distribución uniforme $[0, 2\pi]$, se utilizará una inicialización normal con varianza controlada, centrada en valores que favorezcan la estabilidad del gradiente en las primeras épocas \citep{holmes2022connecting}.
         \item \textbf{Uso de Observables Locales:} Se emplearán funciones de costo basadas en mediciones locales (operadores de un solo qubit) en lugar de globales, lo cual ha demostrado teóricamente suavizar el paisaje de optimización y retrasar la aparición de mesetas \citep{Cerezo2021bp}.
     \end{itemize}
 
