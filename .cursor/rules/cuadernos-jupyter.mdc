@@ -1,0 +1,21 @@
+---
+description: Reglas para asegurar la limpieza y legibilidad de los Jupyter/Colab notebooks de investigación.
+globs: 
+  - "notebooks/**/*.ipynb"
+---
+
+# Reglas para Jupyter Notebooks
+## 1. Claridad Descriptiva (Markdown)
+Los notebooks en este proyecto no son simples borradores temporales; son la documentación viva de los experimentos.
+- **Narrativa Continua:** Los notebooks deben contar la historia del experimento. Usar celdas Markdown para explicar:
+  1. ¿Cuál es el propósito de este bloque de código?
+  2. ¿Qué intuición matemática/cuántica subyace a la celda?
+- **Idioma:** Todo el progreso debe documentarse sistemáticamente en **Español Latinoamericano**.
+
+## 2. Limpieza de Celda (Outputs)
+- **Previo al Commit:** Evitar guardar notebooks con variables gigantes, miles de líneas de outputs de epochs impresos, o binarios residuales, ya que ensucian el historial de Git. 
+- **Verbosidad Controlada:** Al escribir bucles de entrenamiento en PyTorch para Colab, no imprimir (print) cada batch individualmente; imprimir resúmenes por época o usar barras de progreso (`tqdm`).
+
+## 3. Código y Paths Relativos
+- Igual que en el código de Python general, evitar las rutas absolutas (hardcoded). En Google Colab es común montar Drive; estructurar el código de manera que el prefijo del *Drive mount* se defina en una sola constante al principio del notebook.
+- **Modularidad:** Si un bloque de código crece demasiado o se reutiliza en varios notebooks (como una arquitectura VQC estándar), debe extraerse a `.py` en la carpeta `models/` y ser importado.

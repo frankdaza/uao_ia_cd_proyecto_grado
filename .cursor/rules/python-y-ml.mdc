@@ -1,0 +1,44 @@
+---
+description: Reglas estrictas para el código Python enfocado en Machine Learning y Computación Cuántica.
+globs: 
+  - "**/*.py"
+---
+
+# Reglas para Python y Machine Learning
+
+Este documento define los estándares obligatorios al momento de escribir, refactorizar o analizar código en Python, especialmente usando PyTorch y PennyLane. Todo el texto y comentarios generados DEBEN estar en **Español Latinoamericano**.
+
+## 1. Reproducibilidad Estricta
+En proyectos de investigación, la reproducibilidad no es opcional.
+- **Semillas (Seeds):** Siempre aislar la entropía fijando semillas al inicio de los scripts de experimentación.
+  ```python
+  import torch
+  import numpy as np
+  import random
+
+  def set_seed(seed=42):
+      torch.manual_seed(seed)
+      torch.cuda.manual_seed_all(seed)
+      np.random.seed(seed)
+      random.seed(seed)
+      torch.backends.cudnn.deterministic = True
+  ```
+
+## 2. Documentación y Comentarios
+- **Idioma:** Todo el código nuevo debe estar documentado en Español Latinoamericano.
+- **Docstrings:** Las funciones y clases deben tener docstrings siguiendo el formato de **NumPy**. Explique los argumentos, los retornos y, si es aplicable, la intuición matemática de las capas cuánticas o convolucionales.
+- **Claridad Teórica:** Si se implementa un concepto específico de QML (e.g., *Strongly Entangling Layers* o *Angle Embedding*), se debe comentar brevemente por qué se seleccionó, preferiblemente referenciando la literatura de la tesis.
+
+## 3. Calidad y Estructura del Código
+- **Tipado (Type Hinting):** Úsalo siempre. Mejora la legibilidad y previene errores en el manejo de tensores.
+  ```python
+  def extract_features(images: torch.Tensor) -> torch.Tensor:
+      # ...
+  ```
+- **Separación de Preocupaciones:** Mantén las definiciones del modelo analítico separadas de los ciclos de entrenamiento y de la configuración de hiperparámetros.
+- **Gestión de Rutas:** Nunca uses rutas absolutas locales fijas impresas en tu máquina (ej. `C:/Users/Frank/...`). Usa `pathlib` relativo al root del proyecto.
+
+## 4. PyTorch y PennyLane Específicos
+- **Device Agnostic Code:** Asegúrate de que el código corra en CPU, GPU (CUDA) o MPS según la disponibilidad.
+- **Validación del Ansatz:** En PennyLane, comenta cuántos *qubits* estás utilizando y cómo se mapean a las clases del problema (glioma, meningioma, etc.).
+- **Guardado de Modelos:** Los pesos (`.pt`/`.pth`), logs de entrenamiento y figuras generadas deben ir a la carpeta `results/` o `models/`, nunca en la raíz ni mezclados con los datos.

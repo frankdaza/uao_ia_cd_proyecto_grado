@@ -11,6 +11,16 @@
 *.cb
 *.cb2
 .*.lb
+*.bbl
+*.bcf
+*.blg
+*-blx.bib
+*.run.xml
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.pdfsync
 
 ## Intermediate documents:
 *.dvi
@@ -20,19 +30,7 @@
 # but generally, it's a build artifact.
 # *.pdf
 
-## Bibliography auxiliary files (bibtex/biblatex/biber):
-*.bbl
-*.bcf
-*.blg
--blx.bib
-*.run.xml
 
-## Build tool auxiliary files:
-*.fdb_latexmk
-*.synctex
-*.synctex(busy)
-*.synctex.gz
-*.pdfsync
 
 ## Listing auxiliary files:
 *.listing
