@@ -191,7 +191,7 @@
         El auge de las Redes Neuronales Convolucionales (CNN) ha revolucionado el diagnóstico médico. Sin embargo, arquitecturas recientes se centran en maximizar la precisión utilizando grandes volúmenes de datos, ignorando la escasez de información en entornos clínicos reales (\textit{Small Data}).
         Este proyecto investiga la viabilidad de una arquitectura híbrida cuántico-clásica para resolver esta ``paradoja de los datos''.
         A diferencia de trabajos recientes que entrenan modelos híbridos desde cero buscando explicabilidad, esta propuesta integra \textit{Transfer Learning} (usando EfficientNet) con un Clasificador Cuántico Variacional (VQC) para mejorar la \textbf{eficiencia de datos}.
-        La metodología contrastará el modelo híbrido frente a arquitecturas del estado del arte (EfficientNet, ResNet) evaluando específicamente la capacidad de generalización al entrenar con solo el 10\%, 25\% y 50\% del dataset.
+        La metodología contrastará el modelo híbrido frente a arquitecturas del estado del arte (EfficientNet-B0, ResNet-50) evaluando específicamente la capacidad de generalización al entrenar con solo el 10\%, 25\% y 50\% del dataset.
         La hipótesis central es que el componente cuántico permite obtener métricas competitivas con fracciones reducidas de datos, superando a los modelos clásicos propensos al sobreajuste en estos escenarios.
         \\\hline
     \end{longtable}
@@ -307,7 +307,7 @@
 
     \subsection{Pregunta de Investigación}
     \vspace{-0.5cm}
-    ¿Puede una arquitectura híbrida cuántico-clásica, basada en Transfer Learning, demostrar una capacidad de generalización superior a la de arquitecturas clásicas del estado del arte (como EfficientNet-B0 y Resnet) en escenarios de entrenamiento en escasez de datos, manteniendo métricas competitivas?
+    ¿Puede una arquitectura híbrida cuántico-clásica, basada en Transfer Learning, demostrar una capacidad de generalización superior a la de arquitecturas clásicas del estado del arte (como EfficientNet-B0 y ResNet-50) en escenarios de entrenamiento en escasez de datos, manteniendo métricas competitivas?
 
     \newpage
     \section{OBJETIVOS}
@@ -321,7 +321,7 @@
     \vspace{-0.5cm}
     \begin{enumerate}
         \item Desarrollar una arquitectura híbrida que integre una red neuronal clásica pre-entrenada basado en EfficientNet (extractor de características) con un circuito cuántico variacional (VQC) utilizando técnicas de \textit{Angle Embedding} y \textit{Strongly Entangling Layers}.
-        \item Entrenar los modelos de referencia clásicos: EfficientNet, ResNet estableciendo líneas base robustas mediante Transfer Learning y entrenamiento con el conjunto completo de datos.        
+        \item Entrenar los modelos de referencia clásicos: EfficientNet-B0 y ResNet-50 estableciendo líneas base robustas mediante Transfer Learning y entrenamiento con el conjunto completo de datos.        
         \item Analizar cuantitativamente el balance entre la exactitud del modelo propuesto y el conjunto de datos.
         
         
@@ -483,7 +483,7 @@
 
         \item \textbf{A11. Análisis Comparativo de Curvas de Aprendizaje y Brecha de Generalización:} Se realizará un monitoreo sistemático de la evolución de la función de pérdida (\textit{Loss}) y la precisión (\textit{Accuracy}) tanto en el conjunto de entrenamiento como en el de validación a lo largo de las épocas. El sobreajuste se cuantificará mediante la brecha de generalización ($G = |Acc_{train} - Acc_{val}|$). 
         
-        % Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet/ResNet) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
+        % Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet-B0/ResNet-50) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
 
         \item \textbf{A12. Escritura y Documentación del Trabajo de Grado:} Se realizará la redacción del documento, integrando la revisión bibliográfica, el desglose metodológico, la síntesis de resultados y conclusiones.
         
