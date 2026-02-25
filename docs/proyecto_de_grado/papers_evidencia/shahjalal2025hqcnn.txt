@@ -1,0 +1,5 @@
+Target URL: https://arxiv.org/abs/2509.14277
+PDF attempted: https://arxiv.org/pdf/2509.14277.pdf
+Error: HTTP Error 404: Not Found
+
+Could not automatically download PDF due to Paywall, Captcha, or Error.
