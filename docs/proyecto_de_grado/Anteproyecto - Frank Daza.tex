@@ -190,7 +190,7 @@
         \rowcolor{lightgray}\centering\arraybackslash\textbf{RESUMEN} \\\hline
         El auge de las Redes Neuronales Convolucionales (CNN) ha revolucionado el diagnóstico médico. Sin embargo, arquitecturas recientes se centran en maximizar la precisión utilizando grandes volúmenes de datos, ignorando la escasez de información en entornos clínicos reales (\textit{Low-Data regimes}).
         Este proyecto investiga la viabilidad de una arquitectura híbrida cuántico-clásica para resolver esta ``paradoja de los datos''.
-        A diferencia de trabajos recientes que entrenan modelos híbridos desde cero buscando explicabilidad, esta propuesta integra \textit{Transfer Learning} (usando EfficientNet) con un Clasificador Cuántico Variacional (VQC) para mejorar la \textbf{eficiencia de datos}.
+        A diferencia de trabajos recientes que entrenan modelos híbridos desde cero buscando explicabilidad, esta propuesta integra \textit{Transfer Learning} (usando EfficientNet) con un Clasificador Cuántico Variacional (VQC) para mejorar la eficiencia de datos.
         La metodología contrastará el modelo híbrido frente a arquitecturas del estado del arte (EfficientNet-B0, ResNet-50) evaluando específicamente la capacidad de generalización al entrenar con solo el 10\%, 25\% y 50\% del dataset.
         La hipótesis central es que el componente cuántico permite obtener métricas competitivas con fracciones reducidas de datos, superando a los modelos clásicos propensos al sobreajuste en estos escenarios.
         \\\hline
@@ -324,10 +324,6 @@
         \item Entrenar los modelos de referencia clásicos: EfficientNet-B0 y ResNet-50, estableciendo líneas base robustas mediante \textit{Transfer Learning} y entrenamiento con el conjunto completo de datos.        
         \item Evaluar comparativamente la exactitud del modelo híbrido y los modelos clásicos en escenarios de escasez de datos (10\%, 25\% y 50\% del \textit{dataset}), utilizando validación cruzada estratificada y análisis estadístico.
         
-        
-        % Analizar la eficiencia computacional de la propuesta en términos de tiempo de convergencia, número de parámetros entrenables y uso de recursos de simulación, comparándolos con modelos tradicionales de aprendizaje profundo.
-
-        
     \end{enumerate}
 
     \newpage
@@ -363,12 +359,11 @@
 
     Tradicionalmente, las arquitecturas de Redes Neuronales Convolucionales (CNN) clásicas, tales como ResNet y EfficientNet, han dominado el estado del arte en la clasificación automatizada de tumores cerebrales a partir de neuroimágenes, logrando niveles de exactitud sobresalientes en la literatura asistida por ``Big Data'' \citep{shahriyar2025advancements, tan2019efficientnet}. No obstante, la dependencia de estas redes profundas hacia volúmenes masivos de datos para evitar el sobreajuste (\textit{overfitting}) representa una barrera crítica en la práctica clínica, dada la escasez y el costo intrínseco de obtención de estudios médicos etiquetados \citep{willemink2020preparing}.
     
-    Para mitigar esta vulnerabilidad fundamental mediante una mejor representación del espacio de características con pocos parámetros, la investigación ha comenzado a integrar el Aprendizaje Automático Cuántico (QML) con la visión clásica.
-    En el área de clasificación de tejidos médicos con tecnologías cuánticas, \citet{lusnig2024leveraging} propusieron un modelo híbrido basado en redes neuronales cuánticas para diagnosticar la esteatosis hepática a partir de biopsias bajo un marco de aprendizaje federado. En sus resultados, reportaron una precisión diagnóstica del 97\% (superando a una ResNet-18 convencional por un 1.8\%) y mantuvieron una tasa de falsos negativos inferior al 5\%. Sus principales ventajas radican en que las capas cuánticas mejoraron la capacidad de generalización y convergencia al operar con conjuntos de datos clínicos reducidos, mientras que su arquitectura solucionaba la restricción de privacidad de la data inter-hospitalaria. Como limitación, este desarrollo se centró en cortes histopatológicos bidimensionales, dejando abierto el desafío de su escalabilidad computacional en entornos volumétricos de alta demanda e intrincadas texturas, tales como las presentes en resonancias magnéticas craneales (MRI).
+    Para mitigar esta problemática se ha comenzado a integrar la Computación Cuántica junto con el Aprendizaje Automático Clásico, dando lugar a una área emergente como es el QML~\citep{Lloyd2013,Biamonte2017}. En el área de clasificación de tejidos médicos con tecnologías cuánticas, \citet{lusnig2024leveraging} propusieron un modelo híbrido basado en redes neuronales cuánticas para diagnosticar la esteatosis hepática a partir de biopsias bajo un marco de aprendizaje federado. En sus resultados, reportaron una precisión diagnóstica del 97\% (superando a una ResNet-18 convencional por un 1.8\%) y mantuvieron una tasa de falsos negativos inferior al 5\%. Sus principales ventajas radican en que las capas cuánticas mejoraron la capacidad de generalización y convergencia al operar con conjuntos de datos clínicos reducidos, mientras que su arquitectura solucionaba la restricción de privacidad de la data inter-hospitalaria. Como limitación, este desarrollo se centró en cortes histopatológicos bidimensionales, dejando abierto el desafío de su escalabilidad computacional en entornos volumétricos de alta demanda e intrincadas texturas, tales como las presentes en resonancias magnéticas craneales (MRI).
 
     Para neurooncología específicamente, \citet{haddou2025hqcm} presentaron recientemente el modelo HQCM-EBTC para el cribado de tumores cerebrales, logrando una alta precisión (96.48\%) y destacada explicabilidad mediante mapas de atención. Sin embargo, su enfoque utiliza una CNN personalizada entrenada desde cero con el dataset completo (\textit{Full Data}), sin evaluar empíricamente el rendimiento en verdaderos escenarios de escasez de datos, lo cual es el desafío transversal en el dominio médico. Además, su esquema comparativo se limitó a una contraparte clásica básica elaborada por los mismos investigadores, y no frente a arquitecturas del estado del arte refinadas mediante \textit{Transfer Learning}.
 
-    Las revisiones sistemáticas sobre clasificación de neuroimágenes afirman que la ventaja a corto plazo del QML híbrido no reside en superar la exactitud absoluta de las CNN pre-entrenadas con millones de capas de información, sino en exprimir la eficiencia para alcanzar Generalización en regímenes \textit{Low-Data} \citep{shahriyar2025advancements, khan2024brain}. Arquitecturas HQCNN análogas han esbozado esta superioridad paramétrica sobre modelos clásicos base \citep{shahjalal2025hqcnn}, pero persiste un notable vacío empírico: dichas redes cuánticas raramente demuestran su resiliencia bajo rigurosas comparativas frente a los extractores de características hiper-optimizados vigentes --como representaría el uso de \textit{Fine-tuning} sobre un EfficientNet-B0-- en regímenes de entrenamiento severamente limitados. Este es el nicho en el que el presente proyecto evaluará si la Transferencia de Aprendizaje Cuántico-Clásica materializa una ventaja tangible para los diagnósticos de tumores cerebrales bajo escasez de datos.
+    Las revisiones sistemáticas sobre clasificación de neuroimágenes afirman que la ventaja a corto plazo del QML híbrido no reside en superar la exactitud absoluta de las CNN pre-entrenadas con millones de capas de información, sino en exprimir la eficiencia para alcanzar la generalización en regímenes de \textit{Low-Data} \citep{shahriyar2025advancements, khan2024brain}. Arquitecturas HQCNN análogas han esbozado esta superioridad paramétrica sobre modelos clásicos base \citep{shahjalal2025hqcnn}, pero persiste un notable vacío empírico: dichas redes cuánticas raramente demuestran su resiliencia bajo rigurosas comparativas frente a los extractores de características hiper-optimizados vigentes --como representaría el uso de \textit{Fine-tuning} sobre un EfficientNet-B0-- en regímenes de entrenamiento severamente limitados. Este es el nicho en el que el presente proyecto evaluará si la Transferencia de Aprendizaje Cuántico-Clásica materializa una ventaja tangible para los diagnósticos de tumores cerebrales bajo escasez de datos.
 
     \newpage
     \section{MARCO TEÓRICO}
@@ -451,7 +446,7 @@
         \item \textbf{A1. Configuración del Extractor de Características (Transfer Learning):} Se seleccionará la arquitectura \textit{EfficientNet-B0} pre-entrenada con \textit{ImageNet}. A diferencia de enfoques que entrenan CNNs desde cero \citep{haddou2025hqcm}, el uso de pesos pre-entrenados es crucial para evitar el sobreajuste en escenarios de escasez de datos. Se congelarán las capas convolucionales para actuar como un extractor de características robusto, reduciendo la salida a un espacio latente compatible con el circuito cuántico.        
         % \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Esta actividad incluye la definición del método de \textit{Angle Embedding} para mapear las características clásicas en ángulos de rotación de los qubits, y el diseño de un \textit{Ansatz} basado en \textit{Strongly Entangling Layers} para maximizar la capacidad de representación del modelo.
 
-        \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Se define preliminarmente el uso de 4 qubits, estableciendo una correspondencia directa con las 4 clases de tumores del dataset (glioma, meningioma, pituitario y no tumor). La dimensionalidad del extractor clásico se reducirá mediante una capa densa para acoplarse a este número de qubits. Para determinar la configuración óptima, se realizarán experimentos variando la profundidad del \textit{Ansatz} (\textit{Strongly Entangling Layers}) con $L \in \{2, 4, 6\}$ capas. Esta exploración permitirá cuantificar el compromiso entre la expresividad del modelo y el tiempo de simulación, buscando mitigar el riesgo de \textit{Barren Plateaus} mediante una arquitectura de baja profundidad pero alta capacidad de entrelazamiento.
+        \item \textbf{A2. Diseño del Clasificador Cuántico Variacional (VQC):} Se implementará en la librería \textit{PennyLane} un circuito cuántico parametrizado. Se identificará el número de qubits adecuados, estableciendo una correspondencia directa con las 4 clases de tumores del dataset (glioma, meningioma, pituitario y no tumor). La dimensionalidad del extractor clásico se reducirá mediante una capa densa para acoplarse a este número de qubits. Para determinar la configuración óptima, se realizarán experimentos variando la profundidad del \textit{Ansatz} (\textit{Strongly Entangling Layers}) con $L \in \{2, 4, 6\}$ capas. Esta exploración permitirá cuantificar el compromiso entre la expresividad del modelo y el tiempo de simulación, buscando mitigar el riesgo de \textit{Barren Plateaus} mediante una arquitectura de baja profundidad pero alta capacidad de entrelazamiento.
         
         \item \textbf{A3. Implementación de la Interfaz Híbrida:} Mediante el módulo \textit{TorchLayer}, se integrará el circuito cuántico como la capa final de clasificación dentro del flujo de tensores de \textit{PyTorch}, permitiendo el entrenamiento mediante el algoritmo de \textit{backpropagation} clásico y la regla de cambio de parámetro (\textit{Parameter Shift Rule}) para los gradientes cuánticos.
     \end{itemize}
@@ -470,55 +465,21 @@
     
     \begin{itemize}
         \item \textbf{A7. Definición de Escenarios de Escasez:} Creación de subconjuntos de datos estratificados al 10\%, 25\% y 50\% del total del dataset.
-               
-        % \item \textbf{A8. Ejecución de Pruebas de Estrés y Rigor Estadístico:} Se realizarán $n$ ejecuciones independientes (ej. $n=5$) para cada configuración de modelo y tamaño de dataset. Esto permitirá capturar la variabilidad del entrenamiento y garantizar la reproducibilidad de los hallazgos.
 
         \item \textbf{A8. Implementación de Validación Cruzada Estratificada ($k=5$):} Para asegurar la validez estadística en regímenes de escasez de datos, se aplicará un esquema de \textit{Stratified k-fold Cross-Validation} con $k=5$. Esto implica que para cada fracción de datos (10\%, 25\%, 50\%), el subconjunto se dividirá en 5 particiones que mantienen la proporción de clases original. El modelo se entrenará y validará 5 veces, permitiendo reportar la media y la desviación estándar de las métricas, mitigando así el sesgo de selección.
-        
-        % \item \textbf{A9. Evaluación Multimétrica:} Además de las métricas de clasificación (Accuracy, F1-Score), se registrará sistemáticamente el \textbf{tiempo de entrenamiento y latencia de inferencia} para discutir la viabilidad del modelo híbrido en comparación con los baselines clásicos.
-
-
-        % Dado que en el diagnóstico oncológico los falsos negativos y falsos positivos conllevan implicaciones clínicas diferenciadas (ej. la omisión de un glioma vs. la identificación errónea de un tumor pituitario), este análisis por clase permitirá evaluar la fiabilidad del modelo en un contexto médico real.
 
         \item \textbf{A9. Evaluación Multimétrica:} Se calcularán métricas de desempeño que incluyan Accuracy y F1-Score, integrando de manera explícita la sensibilidad y especificidad por clase. Adicionalmente, se registrará sistemáticamente el tiempo de entrenamiento y latencia de inferencia.
         
         \item \textbf{A10. Análisis Estadístico de Resultados:} Se aplicarán pruebas de Análisis de Varianza (ANOVA) para determinar si las diferencias de desempeño observadas entre la arquitectura HQCNN y los modelos clásicos son estadísticamente significativas.
 
         \item \textbf{A11. Análisis Comparativo de Curvas de Aprendizaje y Brecha de Generalización:} Se realizará un monitoreo sistemático de la evolución de la función de pérdida (\textit{Loss}) y la precisión (\textit{Accuracy}) tanto en el conjunto de entrenamiento como en el de validación a lo largo de las épocas. El sobreajuste se cuantificará mediante la brecha de generalización ($G = |Acc_{train} - Acc_{val}|$). 
-        
-        % Esta actividad permitirá contrastar si la arquitectura híbrida, gracias a su mayor capacidad de representación en espacios de Hilbert, mantiene una brecha más estrecha y estable que los modelos clásicos (EfficientNet-B0/ResNet-50) en los regímenes críticos del 10\% y 25\% de datos, donde el riesgo de memorización de ruido es mayor.
 
         \item \textbf{A12. Escritura y Documentación del Trabajo de Grado:} Se realizará la redacción del documento, integrando la revisión bibliográfica, el desglose metodológico, la síntesis de resultados y conclusiones.
         
-        % Redacción progresiva del documento final, integrando la revisión bibliográfica, el desglose metodológico y la síntesis de resultados y conclusiones para la entrega final al comité.
     \end{itemize}
     
     \subsection{Cronograma de Actividades}
     La ejecución de las fases y actividades descritas se proyecta en un periodo de ocho meses (2026), permitiendo tiempos adecuados para la iteración algorítmica y la experimentación computacional.
-    
-    % \begin{table}[H]
-    %     \centering
-    %     \small
-    %     \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
-    %     \hline
-    %     \rowcolor{lightgray} \centering \textbf{Actividad / Mes (2026)} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} & \textbf{6} & \textbf{7} & \textbf{8} \\ \hline
-    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 1: Arquitectura}} \\ \hline
-    %     A1. Configuración Extractor & \cellcolor{blue!20}X & & & & & & & \\ \hline
-    %     A2. Diseño VQC & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & & & \\ \hline
-    %     A3. Integración Híbrida & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & & \\ \hline
-    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 2: Benchmarking}} \\ \hline
-    %     A4. Auditoría Dataset & \cellcolor{blue!20}X & & & & & & & \\ \hline
-    %     A5. Pipeline Preprocesado & & \cellcolor{blue!20}X & & & & & & \\ \hline
-    %     A6. Entrenamiento Baselines & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & & & \\ \hline
-    %     \multicolumn{9}{|l|}{\cellcolor{lightgray!50}\textbf{Fase 3: Experimentación}} \\ \hline
-    %     A7. Estratificación Escenarios & & & & & \cellcolor{blue!20}X & & & \\ \hline
-    %     A8. Pruebas de Estrés ($n=5$) & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X & \\ \hline
-    %     A9. Registro de Tiempos & & & & & & & \cellcolor{blue!20}X & \cellcolor{blue!20}X \\ \hline
-    %     A10. Análisis ANOVA & & & & & & & & \cellcolor{blue!20}X \\ \hline
-    %     \end{tabularx}
-    %     \caption{Cronograma de actividades actualizado con rigor estadístico y múltiples baselines.}
-    %     \label{tab:cronograma}
-    % \end{table}
 
     \begin{table}[H]
         \centering
@@ -546,7 +507,12 @@
         \label{tab:cronograma}
     \end{table}
 
-    
+    \subsection{Resultados Esperados}
+    Resultado 1: El circuito híbrido
+    Resultado 2: modelos entrenados
+    Resultado 3: Evaluación del desempeño
+    Resultado 4: Escritura de un artículo con los resultados del proyecto
+    Resultado 5: Ponencia en un evento de divulgación científica.
 
     \newpage
     \section{RECURSOS Y ASPECTOS ECONÓMICOS}
