@@ -445,7 +445,10 @@
     
     La metodología propuesta se fundamenta en un enfoque experimental comparativo, estructurado en tres fases que corresponden directamente a los objetivos específicos del proyecto. Cada fase desglosa actividades críticas necesarias para validar la hipótesis de eficiencia de datos en arquitecturas híbridas.
     
-    \subsection{Fase 1: Desarrollo de la Arquitectura Híbrida CNN-VQC (Objetivo Específico 1)}
+    \subsection{Actividades}
+    \vspace{-0.5cm}
+    
+    \subsubsection{Fase 1: Desarrollo de la Arquitectura Híbrida CNN-VQC (Objetivo Específico 1)}
     Esta fase técnico-constructiva tiene como fin diseñar el modelo híbrido que combine la potencia de la visión por computadora clásica con la expresividad del cómputo cuántico.
     
     \begin{itemize}
@@ -457,7 +460,7 @@
         \item \textbf{A3. Implementación de la Interfaz Híbrida:} Mediante el módulo \textit{TorchLayer}, se integrará el circuito cuántico como la capa final de clasificación dentro del flujo de tensores de \textit{PyTorch}, permitiendo el entrenamiento mediante el algoritmo de \textit{backpropagation} clásico y la regla de cambio de parámetro (\textit{Parameter Shift Rule}) para los gradientes cuánticos.
     \end{itemize}
     
-    \subsection{Fase 2: Establecimiento de Líneas Base y Preparación de Datos (Objetivo Específico 2)}
+    \subsubsection{Fase 2: Establecimiento de Líneas Base y Preparación de Datos (Objetivo Específico 2)}
     Esta fase garantiza que la comparación sea estadísticamente válida al establecer el rendimiento máximo que los modelos tradicionales pueden alcanzar con el conjunto de datos completo.
     
     \begin{itemize}
@@ -466,7 +469,7 @@
         \item \textbf{A6. Benchmark Clásico (SOTA):} Se entrenarán modelos \textit{EfficientNet-B0} y \textit{ResNet-50} utilizando el 100\% del dataset. Estos resultados servirán como el límite superior de precisión contra el cual se contrastará la eficiencia del modelo cuántico en condiciones de escasez de datos.
     \end{itemize}
     
-    \subsection{Fase 3: Evaluación de Generalización en Escenarios de Escasez de Datos (Objetivo Específico 3)}
+    \subsubsection{Fase 3: Evaluación de Generalización en Escenarios de Escasez de Datos (Objetivo Específico 3)}
     Fase crítica orientada a medir la ventaja cuántica en términos de eficiencia de aprendizaje con pocos ejemplos (\textit{Low-Data regimes}).
     
     \begin{itemize}
