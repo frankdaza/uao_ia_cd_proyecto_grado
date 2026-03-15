@@ -1,5 +1,0 @@
-Target URL: https://ijcsm.researchcommons.org/ijcsm/vol6/iss2/9/
-PDF attempted: https://ijcsm.researchcommons.org/ijcsm/vol6/iss2/9/fulltext.pdf
-Error: HTTP Error 404: Not Found
-
-Could not automatically download PDF due to Paywall, Captcha, or Error.
