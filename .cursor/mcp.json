@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "engram": {
+      "type": "stdio",
+      "command": "engram",
+      "args": [
+        "mcp",
+        "--tools=agent",
+        "--project",
+        "Proyecto de Grado - Maestría en IA y CD"
+      ]
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp", "--path", "${workspaceFolder}"]
+    }
+  }
+}

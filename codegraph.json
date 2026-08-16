@@ -1,0 +1,10 @@
+{
+  "exclude": [
+    "docs/proyecto_de_grado/papers_evidencia/",
+    "**/*.pdf",
+    "**/*.aux",
+    "**/*.log",
+    "**/*.synctex.gz",
+    "notebooks/**/.ipynb_checkpoints/"
+  ]
+}

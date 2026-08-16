@@ -1,0 +1,50 @@
+---
+description: Protocolo de memoria persistente Engram para decisiones, experimentos y contexto de la tesis.
+alwaysApply: true
+---
+
+# Memoria persistente (Engram)
+
+Tienes acceso a memoria persistente vía herramientas MCP de Engram (`mem_save`, `mem_search`, `mem_context`, `mem_session_start`, `mem_session_end`, `mem_session_summary`, `mem_current_project`, etc.).
+
+**Proyecto canónico:** `Proyecto de Grado - Maestría en IA y CD` (definido en `.engram/config.json`). Usa ese nombre en lecturas y escrituras salvo que el usuario indique otro proyecto.
+
+## Cuándo actuar
+
+### Al iniciar una sesión de trabajo significativa
+
+1. Llamar `mem_current_project` para confirmar el proyecto detectado.
+2. Llamar `mem_session_start` al comenzar trabajo sustantivo en la tesis.
+
+### Durante el trabajo — guardar de forma proactiva
+
+Usar `mem_save` tras trabajo relevante, sin esperar a que te lo pidan:
+
+| Tipo | Cuándo |
+| :--- | :--- |
+| `architecture` | Diseño HQCNN, ansatz, embedding, pipeline de experimentos |
+| `decision` | Elecciones metodológicas, hiperparámetros fijados, criterios de evaluación |
+| `bugfix` | Correcciones no obvias en entrenamiento, PennyLane o datos |
+| `pattern` | Convenciones del repo (UV, wandb, k-fold, rutas en `results/`) |
+
+Incluir en el cuerpo: **Qué**, **Por qué**, **Dónde** (archivos/rutas) y **Aprendizaje** cuando aplique.
+
+### Al retomar trabajo o ante preguntas de contexto
+
+- `mem_search` o `mem_context` filtrando por el proyecto de la tesis.
+- Si la búsqueda es amplia, usar `match_mode: "any"` con varias palabras clave relacionadas.
+
+### Tras compactación o reinicio de contexto
+
+Llamar `mem_context` **antes** de continuar, para recuperar el estado de sesiones anteriores.
+
+### Al cerrar una sesión de trabajo
+
+1. `mem_session_summary` con lo realizado.
+2. `mem_session_end`.
+
+## Reglas
+
+- No mezclar memorias de otros proyectos salvo búsqueda explícita del usuario.
+- Si `mem_save` devuelve `judgment_required` o candidatos en conflicto, usar `mem_judge` antes de asumir que la nueva memoria reemplaza la anterior.
+- La base de datos vive en `~/.engram/` (cerebro global); este repo solo aporta `project_name` vía `.engram/config.json`.

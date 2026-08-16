@@ -82,6 +82,7 @@ El agente **no debe** copiar recetas obsoletas del README ni de notebooks antigu
 | `python-y-ml.mdc` | Código Python/ML: UV, semillas, tipado 3.12, PyTorch 2.9, PennyLane 0.45, transfer learning con Weights API. |
 | `escritura-latex.mdc` | LaTeX académico: `natbib` + `apalike`, BibTeX en `Referencias.bib`, sin alucinar DOIs. |
 | `cuadernos-jupyter.mdc` | Notebooks: UV en local, pins en Colab, outputs limpios, modularidad en `src/` o `models/`. |
+| `engram.mdc` | Memoria persistente Engram: cuándo guardar, buscar y recuperar contexto de la tesis. |
 
 ---
 
@@ -106,6 +107,20 @@ Si se requiere ejecutar un Skill, la IA **debe** leer su `SKILL.md` y seguir la 
 5. **Reproducibilidad:** antes de entrenar localmente, verificar `uv sync`; fijar semillas; registrar hiperparámetros en wandb o CSV.
 
 ---
+
+## CodeGraph (inteligencia estructural del código)
+
+<!-- CODEGRAPH START -->
+
+Este proyecto tiene CodeGraph inicializado (`.codegraph/`). La herramienta MCP `codegraph_explore` es el índice preconstruido del código — úsala **antes** de bucles grep/read para preguntas estructurales.
+
+- **Cuándo usarla:** cómo funciona X, flujo de X a Y, qué llama qué, dónde está definido X, o explorar un área del repositorio.
+- **Una llamada suele bastar:** devuelve fuente verbatim con números de línea, rutas de llamada (incluye dispatch dinámico) y radio de impacto.
+- **Confiar en los resultados** del grafo AST; no re-verificar con grep. Si la respuesta incluye banner `⚠️` de archivos pendientes de sync, usar Read solo en esos archivos.
+- **CLI equivalente** (subagentes sin MCP): `codegraph explore "<consulta>"` en la raíz del repo.
+- **Si falta `.codegraph/`:** ejecutar `codegraph init` y reintentar.
+
+<!-- CODEGRAPH END -->
 
 *Este documento establece el contrato marco para la interacción humano-IA en el proyecto de Tesis de Maestría de Frank Daza (2026).*
 
