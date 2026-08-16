@@ -1,31 +1,31 @@
 ---
-description: Reglas para mantener el rigor académico en los documentos LaTeX del proyecto y la tesis.
-globs: 
+description: Reglas para rigor académico en LaTeX, natbib/apalike y BibTeX de la tesis.
+globs:
   - "**/*.tex"
   - "**/*.bib"
+alwaysApply: false
 ---
 
 # Reglas para Redacción Académica y LaTeX
 
-Este documento define las restricciones obligatorias cuando la IA asista redactando, corrigiendo o analizando los archivos LaTeX de la tesis.
+Restricciones obligatorias al redactar, corregir o analizar archivos LaTeX de la tesis.
 
 ## 1. Tono y Estilo
-- **Idioma:** Exclusivamente **Español Latinoamericano** formal, académico y en tercera persona (o primera del plural si así lo establece el autor).
-- **Rigor Científico:** Evitar el uso de jerga informal. Usar términos preferidos en la academia (e.g., "Aprendizaje Automático" o "Machine Learning" de manera consistente; "sesgo", "sobreajuste" para *overfitting*, etc.).
-- **Concisión:** La escritura de la tesis debe ser directa. La IA no debe añadir "relleno" o adornar el texto innecesariamente.
 
-## 2. Manejo de Citas y Referencias
-- **Prohibición de Alucinaciones:** Bajo NINGUNA circunstancia la IA puede inventar citas, papers, autores, o resultados de investigaciones ficticias.
-- **Uso Estricto de BibTeX:** Cuando se argumente un hecho técnico (ej: "Las CNN modernas requieren enormes cantidades de datos..."), se DEBE utilizar `\cite{}` referenciando una entrada existente en `docs/proyecto_de_grado/Referencias.bib`.
-- **Nuevas Referencias:** Si falta evidencia, se debe sugerir al humano buscarla o, si se conoce una referencia del mundo real, se puede usar el skill `add-citation` para indexar el `.bib`.
+- **Idioma:** Español Latinoamericano formal y académico.
+- **Terminología consistente:** "Aprendizaje Automático", "sobreajuste" (*overfitting*), "sesgo".
+- **Concisión:** sin relleno ni adornos innecesarios.
 
-## 3. Estructura y Formato `.tex`
-- **Etiquetas y Referencias Cruzadas:** Toda figura o tabla debe tener un `\label{fig:...}` o `\label{tab:...}`. Cuando se mencione en el texto, usar `\ref{fig:...}` o el paquete correspondiente. Nunca referenciar escribiendo "como se ve en la imagen de abajo".
-- **Fórmulas Matemáticas:** Explicar el significado de los símbolos después de definir una ecuación.
-  ```latex
-  \begin{equation}
-      y = f(Wx + b)
-  \end{equation}
-  donde $f$ es la función de activación, $W$ la matriz de pesos, y $b$ el sesgo.
-  ```
-- **Preservación del Diseño:** No modificar o reemplazar los paquetes (`\usepackage{}`) o el preámbulo en `docs/proyecto_de_grado/Anteproyecto - Frank Daza.tex` a menos que sea explícitamente solicitado para solucionar un problema de compilación.
+## 2. Citas y Referencias
+
+- **Prohibición de alucinaciones:** nunca inventar papers, autores, DOIs ni resultados ficticios.
+- **BibTeX obligatorio:** hechos técnicos deben citarse con `\cite{}` desde entradas existentes en [`docs/proyecto_de_grado/Referencias.bib`](docs/proyecto_de_grado/Referencias.bib).
+- **Nuevas referencias:** usar el skill `agregar-cita` (validar metadata vía Crossref/DOI antes de escribir el `.bib`).
+- **Formato de cita:** `~\cite{clave}` al final de la frase, **antes** del punto.
+- **Motor bibliográfico:** mantener `natbib` + `apalike` (plantilla UAO). No migrar a `biblatex` sin solicitud explícita.
+
+## 3. Estructura `.tex`
+
+- **Etiquetas:** `\label{fig:...}` / `\label{tab:...}`; referenciar con `\ref{}`, nunca "como se ve abajo".
+- **Ecuaciones:** explicar símbolos tras definir la ecuación.
+- **Preámbulo:** no modificar `\usepackage{}` ni el preámbulo de [`docs/proyecto_de_grado/Anteproyecto - Frank Daza.tex`](docs/proyecto_de_grado/Anteproyecto%20-%20Frank%20Daza.tex) salvo para corregir errores de compilación solicitados explícitamente.

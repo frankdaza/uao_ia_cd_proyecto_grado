@@ -1,39 +1,91 @@
 ---
-description: Procedimiento estructurado para automatizar, monitorear y documentar la ejecución de modelos de Machine Learning (Híbridos Cuánticos o Clásicos).
+name: ejecutar-experimento
+description: Automatiza entrenamiento y evaluación de HQCNN o baselines clásicos (EfficientNet-B0, ResNet-50) con UV, k-fold estratificado, wandb y persistencia en results/. Usar al entrenar, ejecutar experimentos, validar modelos híbridos o líneas base en escenarios de escasez de datos.
 ---
 
-# Ejecución de Experimentos de Machine Learning en PyTorch & PennyLane
+# Ejecución de Experimentos (PyTorch 2.9 + PennyLane 0.45)
 
-**Objetivo:** Asegurar que cada iteración de la experimentación se realice bajo estrictas normas de control de calidad y reproducibilidad. Permite automatizar la creación del pipeline PyTorch.
+Asegura reproducibilidad y control de calidad en cada iteración experimental. Todo log y documentación en **Español Latinoamericano**.
 
-> [!IMPORTANTE]
-> Todo registro, log o documentación generada mediante esta habilidad debe producirse en Español Latinoamericano.
+## Precondiciones
 
-## Pasos del Procedimiento
+```bash
+uv sync                    # o uv sync --frozen si existe uv.lock
+uv run python -c "import torch, pennylane; print(torch.__version__, pennylane.__version__)"
+```
 
-Para ejecutar un experimento usando la Arquitectura Híbrida CNN-VQC (HQCNN) o los "Classical Baselines" (EfficientNet-B0), procede estrictamente en este orden:
+En Colab: instalar con pins del `pyproject.toml` (ver `cuadernos-jupyter.mdc`).
 
-# Paso 1: Verificación del Dataset
-Si el objetivo es utilizar un dataset específico, el Agente debe confirmar la ruta del `Brain Tumor MRI Dataset` y revisar que el pipeline de *data augmentation* contenga los pasos estandarizados (Redimensionado, Normalización a tensores, y Data Augmentation si corresponde).
+## Procedimiento
 
-# Paso 2: Fijación de Semillas
-El agente debe asegurarse o inyectar código que inicialice la semilla (e.g., `set_seed(42)`) para Pytorch, Random y NumPy. Si el código actual no lo tiene, debe proporcionarlo.
+### Paso 1: Verificar dataset
 
-# Paso 3: Inicialización del Modelo
-Instancia el modelo propuesto (HQCNN con `TorchLayer` de PennyLane, o Backbone Clásico). El Agente debe:
-- Identificar y documentar el número de parámetros entrenables.
-- Validar el Ansatz Cuántico utilizado (e.g., *Strongly Entangling Layers*) y la profundidad de sus operaciones.
+- Confirmar ruta del **Brain Tumor MRI Dataset** (7023 imágenes, 4 clases).
+- Pipeline: resize 224×224, normalización ImageNet, augmentation (rotaciones leves, flips).
+- Auditar balance de clases (glioma, meningioma, pituitario, no tumor).
 
-# Paso 4: Entrenamiento con Validación Cruzada
-Si la tarea exige evaluación rigurosa:
-* Construye iteraciones sobre un mecanismo de *Stratified k-fold Cross-Validation* (por defecto $k=5$).
-* Evita imprimir el "loss" de cada lote de datos individual (*batch*) de las capas de entrenamiento (para evitar ensuciar los logs de Colab). Solo imprime resúmenes por época.
-* Mide y guarda los tiempos computacionales de ejecución.
+### Paso 2: Fijar semillas
 
-# Paso 5: Persistencia (Guardado)
-Finalizado el entrenamiento interactivo o el script de experimentación local:
-* Exportar el modelo/los pesos en formato `.pth` en el directorio `models/`. Nombrar el archivo descriptivamente (ej. `hqcnn_kfold1_epoch50_acc89.pth`).
-* Imprimir, visualizar o exportar as métricas calculadas como Accuracy, F1-Score y Loss.
+Inyectar o verificar `set_seed(42)` (ver `python-y-ml.mdc`) antes de cualquier split o entrenamiento.
 
-## Cómo Invocar Esta Habilidad
-**Tú**: "Ejecutar experimento: Configura un entrenamiento para la red híbrida usando el dataset al 25% y 4 qubits."
+### Paso 3: Inicializar modelo
+
+**Baselines clásicos:**
+
+- EfficientNet-B0 y ResNet-50 con `weights=` API (no `pretrained=True`).
+- Congelar extractor; entrenar cabeza de clasificación.
+
+**HQCNN:**
+
+- Extractor: EfficientNet-B0 congelado → capa densa → `qml.qnn.TorchLayer`.
+- VQC: `AngleEmbedding` + `StronglyEntanglingLayers`, `L ∈ {2, 4, 6}`, 4 qubits.
+- QNode: `interface="torch"`, `diff_method="parameter-shift"`, dispositivo `default.qubit`.
+
+Documentar:
+
+- Parámetros entrenables vs congelados.
+- `n_qubits`, `n_layers`, `diff_method`, dispositivo PyTorch y simulador cuántico.
+
+### Paso 4: Escenarios de escasez
+
+Crear subconjuntos estratificados al **10 %, 25 %, 50 % y 100 %** con `StratifiedShuffleSplit` (`random_state=42`).
+
+### Paso 5: Validación cruzada
+
+- `StratifiedKFold(n_splits=5, shuffle=True, random_state=42)`.
+- Modelo fresco por fold.
+- Logs por época (no por batch); usar `tqdm`.
+- Registrar tiempo de entrenamiento e inferencia por fold.
+
+### Paso 6: Métricas
+
+Por fold y escenario, calcular y guardar:
+
+- Accuracy, F1-Score ponderado.
+- Sensibilidad y especificidad por clase.
+- Loss (train/val).
+- Brecha de generalización: `G = |Acc_train - Acc_val|`.
+- Latencia de inferencia (ms/batch).
+
+### Paso 7: Persistencia
+
+| Artefacto | Ubicación |
+| :--- | :--- |
+| Pesos (`state_dict`) | `models/{modelo}_{fraccion}_fold{k}_acc{xx}.pth` |
+| Métricas tabulares | `results/metrics_{modelo}_{fecha}.csv` |
+| Curvas y confusion matrices | `results/figures/` |
+| Monitoreo en tiempo real | wandb (proyecto configurado por el usuario) |
+
+Registrar en wandb/CSV: hiperparámetros, semilla, fracción de datos, fold, tiempos y métricas.
+
+### Paso 8: Ejecución local
+
+```bash
+uv run python src/train.py --model hqcnn --data-fraction 0.25 --folds 5
+```
+
+Adaptar según el script existente; nunca ejecutar con `python` del sistema.
+
+## Invocación
+
+> "Ejecutar experimento: entrena HQCNN al 25 % con 4 qubits, L=2, k-fold=5."

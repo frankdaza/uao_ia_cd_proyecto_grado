@@ -1,44 +1,100 @@
 ---
-description: Reglas estrictas para el código Python enfocado en Machine Learning y Computación Cuántica.
-globs: 
+description: Reglas estrictas para código Python/ML con UV, PyTorch 2.9 y PennyLane 0.45.
+globs:
   - "**/*.py"
+alwaysApply: false
 ---
 
 # Reglas para Python y Machine Learning
 
-Este documento define los estándares obligatorios al momento de escribir, refactorizar o analizar código en Python, especialmente usando PyTorch y PennyLane. Todo el texto y comentarios generados DEBEN estar en **Español Latinoamericano**.
+Estándares obligatorios al escribir, refactorizar o analizar código Python con PyTorch y PennyLane. Todo el texto y comentarios en **Español Latinoamericano**.
+
+## 0. Entorno con UV
+
+- **Único gestor local:** UV. Prohibido `pip install`, `conda`, `poetry` o `python -m venv` como flujo principal.
+- **Comandos:** `uv python pin 3.12`, `uv add <pkg>`, `uv sync`, `uv run python <script>`.
+- **Ejecución:** nunca invocar `python` del sistema; siempre `uv run`.
+- **Excepción:** Google Colab (ver `cuadernos-jupyter.mdc`).
 
 ## 1. Reproducibilidad Estricta
-En proyectos de investigación, la reproducibilidad no es opcional.
-- **Semillas (Seeds):** Siempre aislar la entropía fijando semillas al inicio de los scripts de experimentación.
-  ```python
-  import torch
-  import numpy as np
-  import random
 
-  def set_seed(seed=42):
-      torch.manual_seed(seed)
-      torch.cuda.manual_seed_all(seed)
-      np.random.seed(seed)
-      random.seed(seed)
-      torch.backends.cudnn.deterministic = True
-  ```
+```python
+import random
 
-## 2. Documentación y Comentarios
-- **Idioma:** Todo el código nuevo debe estar documentado en Español Latinoamericano.
-- **Docstrings:** Las funciones y clases deben tener docstrings siguiendo el formato de **NumPy**. Explique los argumentos, los retornos y, si es aplicable, la intuición matemática de las capas cuánticas o convolucionales.
-- **Claridad Teórica:** Si se implementa un concepto específico de QML (e.g., *Strongly Entangling Layers* o *Angle Embedding*), se debe comentar brevemente por qué se seleccionó, preferiblemente referenciando la literatura de la tesis.
+import numpy as np
+import torch
 
-## 3. Calidad y Estructura del Código
-- **Tipado (Type Hinting):** Úsalo siempre. Mejora la legibilidad y previene errores en el manejo de tensores.
-  ```python
-  def extract_features(images: torch.Tensor) -> torch.Tensor:
-      # ...
-  ```
-- **Separación de Preocupaciones:** Mantén las definiciones del modelo analítico separadas de los ciclos de entrenamiento y de la configuración de hiperparámetros.
-- **Gestión de Rutas:** Nunca uses rutas absolutas locales fijas impresas en tu máquina (ej. `C:/Users/Frank/...`). Usa `pathlib` relativo al root del proyecto.
 
-## 4. PyTorch y PennyLane Específicos
-- **Device Agnostic Code:** Asegúrate de que el código corra en CPU, GPU (CUDA) o MPS según la disponibilidad.
-- **Validación del Ansatz:** En PennyLane, comenta cuántos *qubits* estás utilizando y cómo se mapean a las clases del problema (glioma, meningioma, etc.).
-- **Guardado de Modelos:** Los pesos (`.pt`/`.pth`), logs de entrenamiento y figuras generadas deben ir a la carpeta `results/` o `models/`, nunca en la raíz ni mezclados con los datos.
+def set_seed(seed: int = 42) -> None:
+    """Fija semillas para reproducibilidad en CPU, CUDA y MPS."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    try:
+        torch.use_deterministic_algorithms(True)
+    except RuntimeError:
+        pass  # Algunas ops no tienen implementación determinista
+```
+
+## 2. Tipado y Documentación
+
+- **Tipado Python 3.12:** `list[int]`, `dict[str, float]`, `X | None`. Evitar `typing.List` / `Optional`.
+- **Docstrings:** formato NumPy, en español. Incluir intuición matemática en capas cuánticas o convolucionales.
+- **QML:** si se usa *Angle Embedding* o *Strongly Entangling Layers*, comentar la elección y referenciar la literatura de la tesis.
+
+## 3. Estructura del Código
+
+- Separar modelos, entrenamiento y configuración de hiperparámetros.
+- Rutas con `pathlib.Path` relativas al root del proyecto; nunca rutas absolutas locales.
+- Pesos en `models/`, métricas y figuras en `results/`. No mezclar con datos crudos.
+
+## 4. PyTorch (torchvision 0.24)
+
+**Prohibido** `pretrained=True`. Usar la API de Weights:
+
+```python
+from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0, resnet50, ResNet50_Weights
+
+backbone = efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
+baseline = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+```
+
+- **Device:** `cuda` > `mps` > `cpu` según disponibilidad.
+- **Transfer learning:** congelar `features`; entrenar solo cabeza clásica o capa cuántica.
+- **Persistencia:** guardar `model.state_dict()`, no el módulo completo (especialmente con `TorchLayer`).
+- **Prohibido** `torch.compile()` sobre modelos que contengan QNodes de PennyLane.
+
+## 5. PennyLane 0.45 (VQC + TorchLayer)
+
+Dispositivo por defecto: `default.qubit`. `diff_method="parameter-shift"` para alineación metodológica con la tesis.
+
+```python
+import pennylane as qml
+import torch
+
+n_qubits = 4
+n_layers = 2
+
+dev = qml.device("default.qubit", wires=n_qubits)
+
+
+@qml.qnode(dev, interface="torch", diff_method="parameter-shift")
+def quantum_circuit(inputs: torch.Tensor, weights: torch.Tensor) -> list[torch.Tensor]:
+    qml.AngleEmbedding(inputs, wires=range(n_qubits))
+    qml.StronglyEntanglingLayers(weights, wires=range(n_qubits))
+    return [qml.expval(qml.Z(i)) for i in range(n_qubits)]
+
+
+weight_shapes = {
+    "weights": qml.StronglyEntanglingLayers.shape(n_layers=n_layers, n_wires=n_qubits)
+}
+q_layer = qml.qnn.TorchLayer(quantum_circuit, weight_shapes)
+```
+
+- Documentar mapeo qubits ↔ clases (glioma, meningioma, pituitario, no tumor).
+- **Inicialización VQC:** no depender del uniforme `[0, 2π]` por defecto de `TorchLayer`; usar `init_method` con varianza controlada (Grant et al.).
+- `lightning.qubit` solo para prototipos rápidos, no como default en entrenamiento con `parameter-shift` + batching.

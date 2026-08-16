@@ -1,0 +1,59 @@
+[project]
+name = "uao-hqcnn-tesis"
+version = "0.1.0"
+description = "Evaluación de eficiencia de datos en arquitectura híbrida CNN-VQC para diagnóstico de tumores cerebrales en MRI"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Proprietary" }
+authors = [{ name = "Frank Edward Daza Gonzalez" }]
+
+dependencies = [
+    "pennylane==0.45.1",
+    "pennylane-lightning==0.45.1",
+    "torch==2.9.1",
+    "torchvision==0.24.1",
+    "torchaudio==2.9.1",
+    "numpy>=2.0,<2.3",
+    "scikit-learn==1.9.0",
+    "scipy>=1.16,<1.17",
+    "statsmodels==0.14.6",
+    "pandas>=2.3,<2.4",
+    "matplotlib>=3.10,<3.11",
+    "seaborn>=0.13,<0.14",
+    "wandb>=0.28,<0.29",
+    "tqdm>=4.67,<5",
+    "pillow>=11,<12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.9,<1",
+    "ipykernel>=6.29,<7",
+    "jupyterlab>=4.3,<5",
+]
+
+# Índice oficial de PyTorch. Ajustar según plataforma:
+# - macOS (Apple Silicon / CPU): pytorch-cpu
+# - Linux + NVIDIA (Colab/local CUDA): pytorch-cu128
+# - Documentar en notebooks Colab el equivalente pip si no se usa UV.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
