@@ -4,8 +4,77 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-7: Extractor congelado y fábrica de backbones (A1)
 % TASK-8: Bucle unificado de entrenamiento y evaluación (Trainer)
 % TASK-9: Clasificador cuántico variacional de 4 qubits (A2)
 % TASK-10: Modelo híbrido HQCNN con TorchLayer (A3)
 % TASK-11: Ablación de profundidad L y presupuesto de cómputo
+
+\subsubsection{Task-7: Extractor congelado y fábrica de backbones (A1)}
+\label{hallazgo:task-7}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A1 --- Extractor de características clásico preentrenado y congelado (m-1) \\\hline
+\textbf{Artefactos} & \texttt{src/models/backbones.py}, \texttt{src/models/heads.py}, \texttt{src/models/\_\_init\_\_.py}, \texttt{tests/test\_backbones.py} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Construir una fábrica compartida de \textit{backbones} EfficientNet-B0 y ResNet-50 con
+pesos ImageNet, con todas las capas convolucionales congeladas y una cabeza intercambiable
+que reduce el espacio latente a 4 dimensiones (número de clases y de qubits del VQC).
+Congelar el extractor hace viable el régimen de escasez: entrenar millones de parámetros
+con 10\,\% de los datos garantiza sobreajuste, mientras que entrenar solo la cabeza mantiene
+la capacidad proporcional a la evidencia~\cite{mari2020transfer}.
+
+\paragraph{Procedimiento.}
+\texttt{build\_backbone(nombre)} carga pesos con la Weights API de torchvision (nunca
+\texttt{pretrained=True}): EfficientNet-B0 con \texttt{IMAGENET1K\_V1}~\cite{tan2019efficientnet}
+y ResNet-50 con \texttt{IMAGENET1K\_V2}~\cite{he2016deep}. La cabeza de clasificación se
+sustituye por \texttt{nn.Identity()} para conservar el \textit{pooling} adaptativo; todos
+los parámetros quedan con \texttt{requires\_grad=False} y el módulo en \texttt{eval()}.
+La cabeza \texttt{CabeceraReduccion} implementa \texttt{Linear(dim\_latente $\rightarrow$ 4)}
+y es compartida por la línea base clásica (TASK-12) y la reducción previa al VQC (TASK-10).
+Las versiones de pesos quedan registradas en \texttt{VERSIONES\_PESOS} y
+\texttt{obtener\_version\_pesos()}. Verificación:
+\begin{verbatim}
+uv run pytest tests/test_backbones.py -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Dimensiones latentes y conteo de parámetros (calculado con \texttt{contar\_parametros()}):
+
+\begin{center}
+\small
+\begin{tabular}{lrlrr}\hline
+\textbf{Arquitectura} & \textbf{Versión pesos} & \textbf{Dim.} & \textbf{Congelados} & \textbf{Entrenables} \\\hline
+EfficientNet-B0 & IMAGENET1K\_V1 & 1280 & 4\,007\,548 & 0 (backbone) / 5\,124 (con cabeza) \\
+ResNet-50 & IMAGENET1K\_V2 & 2048 & 23\,508\,032 & 0 (backbone) / 8\,196 (con cabeza) \\\hline
+\end{tabular}
+\end{center}
+
+Pruebas automatizadas: \textbf{10 passed} (forma de salida, gradiente nulo en backbone,
+modo \texttt{eval()}, conteo de parámetros, filtro para optimizador, cabeza intercambiable).
+
+\paragraph{Interpretación.}
+Una única fábrica garantiza que HQCNN y líneas base comparten el mismo extractor y solo
+difieren en la cabeza posterior: es la condición para una comparación arquitectónica limpia
+sin ramas \texttt{if modelo == "hqcnn"} en el bucle de entrenamiento (OCP). La reducción
+de 1280 o 2048 dimensiones a 4 es un \textbf{cuello de botella severo} impuesto por el
+número de qubits del VQC: no es una optimización de ancho de banda, sino una restricción
+del diseño; HQCNN y línea base compiten bajo la misma restricción, no en igualdad de
+información latente.
+
+\paragraph{Decisiones.}
+Versión de pesos ResNet-50: \texttt{IMAGENET1K\_V2} (mejor exactitud que V1, receta de
+entrenamiento distinta; debe declararse al contrastar con la literatura). Sustituir la cabeza
+por \texttt{Identity} en lugar de recortar \texttt{features} evita errores de forma en el
+\textit{pooling}. \texttt{parametros\_entrenables()} filtra tensores para Adam (TASK-8):
+pasar \texttt{modelo.parameters()} completo mantiene momentos espurios en parámetros
+congelados.
+
+\paragraph{Limitaciones.}
+\texttt{requires\_grad=False} no impide que BatchNorm actualice estadísticas móviles si el
+módulo está en \texttt{train()}. \texttt{build\_backbone()} devuelve \texttt{eval()}; mantener
+ese modo cuando el \texttt{Trainer} llama \texttt{model.train()} es responsabilidad del
+módulo contenedor híbrido (TASK-10). La normalización de entrada debe ser la de ImageNet
+(TASK-5); un backbone congelado con estadísticas distintas desplaza las características
+transferidas.

@@ -1,11 +1,11 @@
 ---
 id: TASK-7
 title: Extractor congelado y fábrica de backbones (A1)
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:06'
-updated_date: '2026-08-17 01:06'
+updated_date: '2026-08-17 02:31'
 labels:
   - arquitectura
   - bitacora
@@ -21,9 +21,15 @@ documentation:
   - docs/proyecto_de_grado/Anteproyecto - Frank Daza.tex
   - docs/trabajo_de_grado/Bitacora Metodologica de Hallazgos.tex
   - .cursor/rules/python-y-ml.mdc
+modified_files:
+  - src/models/backbones.py
+  - src/models/heads.py
+  - src/models/__init__.py
+  - tests/test_backbones.py
+  - docs/trabajo_de_grado/hallazgos/h1_arquitectura.tex
 priority: high
 type: feature
-ordinal: 7000
+ordinal: 1000
 ---
 
 ## Description
@@ -55,22 +61,22 @@ flowchart LR
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 pretrained=True no aparece en el código: los pesos se cargan con la Weights API y la versión de pesos elegida queda registrada
-- [ ] #2 build_backbone devuelve el backbone y su dimensión de salida; añadir una arquitectura nueva no exige modificar el Trainer ni el modelo híbrido (OCP)
-- [ ] #3 Todas las capas del backbone quedan con requires_grad=False y una prueba verifica que su gradiente es None tras un paso de retropropagación
-- [ ] #4 El backbone permanece en modo eval() mientras está congelado, de modo que BatchNorm no actualiza sus estadísticas móviles con lotes pequeños
-- [ ] #5 La cabeza es intercambiable: el mismo extractor alimenta la cabeza clásica de la línea base y la reducción que consume el VQC
-- [ ] #6 El conteo de parámetros entrenables frente a congelados se calcula programáticamente para ambas arquitecturas
-- [ ] #7 Solo los parámetros con requires_grad=True se entregan al optimizador
-- [ ] #8 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-7} y tabla de parámetros por arquitectura
+- [x] #1 pretrained=True no aparece en el código: los pesos se cargan con la Weights API y la versión de pesos elegida queda registrada
+- [x] #2 build_backbone devuelve el backbone y su dimensión de salida; añadir una arquitectura nueva no exige modificar el Trainer ni el modelo híbrido (OCP)
+- [x] #3 Todas las capas del backbone quedan con requires_grad=False y una prueba verifica que su gradiente es None tras un paso de retropropagación
+- [x] #4 El backbone permanece en modo eval() mientras está congelado, de modo que BatchNorm no actualiza sus estadísticas móviles con lotes pequeños
+- [x] #5 La cabeza es intercambiable: el mismo extractor alimenta la cabeza clásica de la línea base y la reducción que consume el VQC
+- [x] #6 El conteo de parámetros entrenables frente a congelados se calcula programáticamente para ambas arquitecturas
+- [x] #7 Solo los parámetros con requires_grad=True se entregan al optimizador
+- [x] #8 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-7} y tabla de parámetros por arquitectura
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #2 Pruebas de congelamiento y de dimensión de salida para EfficientNet-B0 y ResNet-50
-- [ ] #3 El cuello de botella de reducir el espacio latente a 4 dimensiones queda declarado como limitación del diseño
-- [ ] #4 Sin APIs deprecadas de torchvision
+- [x] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #2 Pruebas de congelamiento y de dimensión de salida para EfficientNet-B0 y ResNet-50
+- [x] #3 El cuello de botella de reducir el espacio latente a 4 dimensiones queda declarado como limitación del diseño
+- [x] #4 Sin APIs deprecadas de torchvision
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -138,6 +144,8 @@ def contar_parametros(modelo: nn.Module) -> dict[str, int]:
 5. Escribir la prueba de forma: la salida del backbone tiene la dimensión declarada para cada arquitectura.
 6. Verificar que solo los parámetros con `requires_grad=True` llegan al optimizador (se consume en task-8).
 7. Registrar en `hallazgos/h1_arquitectura.tex` la tabla de parámetros entrenables frente a congelados por arquitectura, con la versión de pesos utilizada.
+
+8. Entregables ampliados: src/models/heads.py (CabeceraReduccion), VERSIONES_PESOS, obtener_version_pesos(), parametros_entrenables().
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -151,4 +159,14 @@ def contar_parametros(modelo: nn.Module) -> dict[str, int]:
 - No pasar los parámetros congelados al optimizador. `torch.optim.Adam(modelo.parameters())` mantiene estado (momentos) para tensores que nunca cambian: gasta memoria y, si alguien reactiva `requires_grad`, arranca con estado espurio. Filtrar siempre por `requires_grad`.
 - La normalización de entrada debe ser la de ImageNet (task-5). Un backbone congelado con normalización distinta a la de su preentrenamiento produce características desplazadas y el efecto se confunde con el de la arquitectura.
 - EfficientNet-B0 y ResNet-50 tienen dimensiones latentes distintas (1280 y 2048). La fábrica **devuelve** la dimensión precisamente para que ningún módulo la escriba a mano.
+
+Alcance AC #4: build_backbone() devuelve eval(); mantener eval() bajo model.train() es responsabilidad del contenedor híbrido (TASK-10).
+
+Validación: uv run pytest tests/test_backbones.py -q → 10 passed. Conteos: EfficientNet-B0 4_007_548 congelados / 5_124 entrenables con cabeza (dim 1280); ResNet-50 23_508_032 congelados / 8_196 entrenables con cabeza (dim 2048).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fábrica build_backbone() con Weights API, VERSIONES_PESOS, contar_parametros(), parametros_entrenables() y CabeceraReduccion en src/models/. Hallazgo en h1_arquitectura.tex. Verificado con pytest tests/test_backbones.py (10 passed).
+<!-- SECTION:FINAL_SUMMARY:END -->
