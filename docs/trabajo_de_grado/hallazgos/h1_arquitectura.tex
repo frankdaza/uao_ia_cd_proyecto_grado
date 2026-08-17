@@ -104,7 +104,11 @@ se reporta (evita fuga por selección de época). Emite \texttt{RunRecord} y
 \texttt{EpochRecord}; reanudabilidad por tupla \texttt{(modelo, data\_fraction, fold, semilla)};
 pesos en \texttt{models/\{modelo\}\_\{frac\}\_f\{fold\}\_s\{semilla\}.pt} con
 \texttt{state\_dict()} exclusivamente. Tiempos de inferencia con calentamiento y
-sincronización de dispositivo (TASK-4). Verificación:
+sincronización de dispositivo (TASK-4). Durante el entrenamiento, el \texttt{Trainer}
+muestra una barra \texttt{tqdm} por lote (una línea reescrita en consola) y un
+\texttt{logger.info} por época con pérdidas, exactitud de validación, tiempo por época
+y ETA; sin logs por muestra ni por paso de \texttt{backward}. Las barras se desactivan
+si no hay TTY (pytest). Verificación:
 \begin{verbatim}
 uv run pytest tests/test_trainer.py -q
 uv run pytest tests/ -q
@@ -127,7 +131,7 @@ Clave de reanudabilidad & \texttt{(modelo, data\_fraction, fold, semilla)} \\\hl
 \end{center}
 
 Pruebas automatizadas: \textbf{8 passed} en \texttt{test\_trainer.py}; regresión completa
-\textbf{57 passed}. Sustituibilidad verificada: el mismo \texttt{Trainer} entrena un modelo
+\textbf{95 passed}. Sustituibilidad verificada: el mismo \texttt{Trainer} entrena un modelo
 clásico trivial y uno con capa cuántica simulada (logits en $[-1,1]$) sin ramas
 condicionales por tipo de modelo.
 
@@ -142,7 +146,9 @@ mismo fold reportado. \texttt{n\_capas\_vqc} se obtiene por \textit{duck typing}
 Separar \texttt{construir\_loaders\_para\_fold()} del \texttt{Trainer} preserva SRP: el
 bucle entrena y evalúa; no arma particiones. Los \textit{sinks} (CSV, wandb, JSON) quedan
 fuera del \texttt{Trainer}: este emite registros y el orquestador (TASK-13) persiste.
-Solo parámetros con \texttt{requires\_grad=True} entran a Adam.
+Solo parámetros con \texttt{requires\_grad=True} entran a Adam. Presupuesto de 15 épocas
+es el de diseño; queda sujeto a confirmación tras la sonda de 1 época en Colab/CUDA
+(TASK-13, decisión D2).
 
 \paragraph{Limitaciones.}
 El \texttt{Trainer} llama \texttt{model.train()} en cada época; mantener el backbone
@@ -288,7 +294,35 @@ el gradiente fluye solo hacia \texttt{reduccion} y \texttt{vqc}.
 
 Con \texttt{parameter-shift}, PennyLane no admite retropropagación en lotes sobre el
 QNode (issue \#4462): el \texttt{forward} itera muestra a muestra sobre
-\texttt{TorchLayer} y apila los logits. Verificación:
+\texttt{TorchLayer} y apila los logits.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=0.75cm and 0.9cm,
+  box/.style={draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.65cm, font=\small},
+  arrow/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[box] (mri) {MRI $224\times224$};
+  \node[box, below=of mri] (bb) {EfficientNet-B0\\congelado (\texttt{eval})};
+  \node[box, below=of bb] (lin) {Linear $1280\to4$};
+  \node[box, below=of lin] (acot) {$\tanh(x)\cdot\pi$};
+  \node[box, below=of acot] (ae) {AngleEmbedding};
+  \node[box, below=of ae] (sel) {SEL $L$ capas};
+  \node[box, below=of sel] (z) {$\langle Z_i\rangle$ logits};
+  \draw[arrow] (mri) -- (bb);
+  \draw[arrow] (bb) -- (lin);
+  \draw[arrow] (lin) -- (acot);
+  \draw[arrow] (acot) -- (ae);
+  \draw[arrow] (ae) -- (sel);
+  \draw[arrow] (sel) -- (z);
+\end{tikzpicture}
+\caption{Flujo HQCNN de extremo a extremo (TASK-10): extractor congelado, reducción,
+acotación de ángulos, VQC vía \texttt{TorchLayer} y 4 logits.}
+\label{fig:arquitectura-hqcnn-task10}
+\end{figure}
+
+Verificación:
 \begin{verbatim}
 uv run pytest tests/test_hqcnn.py -q
 \end{verbatim}
@@ -307,15 +341,19 @@ VQC \texttt{StronglyEntanglingLayers} & 48 & Sí \\\hline
 \end{tabular}
 \end{center}
 
-Verificación numérica del gradiente (peso de mayor magnitud, CPU, $\varepsilon=10^{-4}$,
-semilla 42): analítico $= 8{,}18\times10^{-2}$, numérico $= 8{,}17\times10^{-2}$
-(relativo $< 0{,}2\,\%$).
+Verificación numérica del gradiente (peso de mayor magnitud, CPU, float32,
+$\varepsilon=10^{-4}$, semilla 42): analítico $= 8{,}18\times10^{-2}$, numérico
+$= 8{,}17\times10^{-2}$ (error relativo observado $< 0{,}2\,\%$ en esa corrida; la
+prueba automatizada usa \texttt{rtol=0.15} por inestabilidad de \texttt{parameter-shift}
+en float32).
 
 Los logits son $\langle Z_i\rangle \in [-1,1]$ por construcción; la confianza máxima
-del \textit{softmax} queda acotada (p.\,ej.\ con logits uniformes en $[-1,1]$ la
-máxima probabilidad es $\approx 0{,}41$). Es propiedad del diseño, no un error de
-entrenamiento; no se añade factor de escala aprendible para preservar la comparabilidad
-factorial (TASK-11/13).
+del \textit{softmax} con 4 clases queda acotada. Con logits $(1,-1,-1,-1)$:
+\[
+p_{\max} = \frac{e^{1}}{e^{1}+3e^{-1}} \approx 0{,}711.
+\]
+Es propiedad del diseño, no un error de entrenamiento; no se añade factor de escala
+aprendible para preservar la comparabilidad factorial (TASK-11/13).
 
 Pruebas automatizadas: \textbf{12 passed} en \texttt{test\_hqcnn.py}; el mismo
 \texttt{Trainer} de TASK-8 entrena el HQCNN una época sin ramas condicionales.
@@ -346,7 +384,7 @@ puede tener gradiente casi nulo en la inicialización.
 \begin{tabularx}{\textwidth}{|l|X|}\hline
 \textbf{Fecha} & 2026-08-17 \\\hline
 \textbf{Actividad} & A2 --- Selección de profundidad del ansatz y compuerta de viabilidad (m-1) \\\hline
-\textbf{Artefactos} & \texttt{src/experiments/ablacion\_L.py}, \texttt{results/ablacion\_L.csv}, \texttt{results/selected\_hparams.json}, \texttt{results/figures/ablacion\_L\_curvas\_perdida.png} \\\hline
+\textbf{Artefactos} & \texttt{src/experiments/ablacion\_L.py}, \texttt{results/ablacion\_L.csv}, \texttt{results/selected\_hparams.json}, \texttt{results/figures/ablacion\_L\_curvas\_perdida.png}, \texttt{results/history/hqcnn\_0p25\_f0\_s42\_L\{2,4,6\}.json} \\\hline
 \end{tabularx}
 
 \paragraph{Objetivo.}
@@ -376,21 +414,25 @@ ablación se ejecutó en \texttt{cpu} para tiempos extrapolables con el simulado
 \texttt{default.qubit}.
 
 \paragraph{Resultados.}
-Tabla comparativa (fold 0, 25\,\%, 5 épocas, $n_{\mathrm{train}}=1345$):
+Tabla comparativa (fold 0, 25\,\%, 5 épocas, $n_{\mathrm{train}}=1345$, dispositivo \texttt{cpu}):
 
 \begin{center}
 \small
-\begin{tabular}{ccccc}\hline
-\textbf{$L$} & \textbf{F1 macro} & \textbf{Acc. val} & \textbf{s/época} & \textbf{$\|\nabla\theta\|$ init.} \\\hline
-2 & 0.594 & 0.672 & 317 & 1.237 \\
-4 & 0.659 & 0.734 & 522 & 1.730 \\
-6 & 0.817 & 0.810 & 837 & 2.107 \\\hline
+\begin{tabular}{cccccc}\hline
+\textbf{$L$} & \textbf{F1 macro} & \textbf{Acc. val} & \textbf{Loss val} & \textbf{s/época} & \textbf{$n_{\mathrm{q}}$} \\\hline
+2 & 0.594 & 0.672 & 0.867 & 314 & 24 \\
+4 & 0.659 & 0.734 & 0.790 & 544 & 48 \\
+6 & 0.817 & 0.810 & 0.878 & 842 & 72 \\\hline
 \end{tabular}
 \end{center}
 
-Parámetros cuánticos: $L \times 4 \times 3$ (24, 48, 72). La norma de gradiente
-inicial \textit{aumenta} con $L$ en este rango; no hay evidencia de meseta árida en
-la inicialización cercana a la identidad.
+Normas de gradiente inicial: $L=2$: 1.237; $L=4$: 1.730; $L=6$: 2.107 (aumentan con $L$;
+sin evidencia de meseta árida en la inicialización cercana a la identidad).
+
+\paragraph{Interpretación CE vs.\ F1.}
+$L=6$ maximiza F1 macro (0.817) pero \textit{CrossEntropyLoss} de validación (0.878) supera
+a $L=4$ (0.790): con logits en $[-1,1]$ la pérdida no es monótona con la calidad de
+clasificación. Por eso el criterio pre-declarado usa F1 macro, no loss.
 
 \begin{figure}[H]
 \centering
@@ -400,23 +442,58 @@ TASK-11. Permiten distinguir arquitectura peor de no convergencia en 5 épocas.}
 \label{fig:ablacion-L-curvas}
 \end{figure}
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=0.85cm and 1.1cm,
+  box/.style={draw, rounded corners, align=center, minimum width=2.5cm, minimum height=0.7cm, font=\small},
+  arrow/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[box] (l) {$L \in \{2,4,6\}$};
+  \node[box, below=of l] (tr) {Trainer TASK-8\\fold 0, 25\,\%, 5 ep.};
+  \node[box, below=of tr] (tab) {Tabla + historiales\\por $L$};
+  \node[box, below left=0.7cm and 0.3cm of tab] (sel) {$L$ congelada\\JSON};
+  \node[box, below right=0.7cm and 0.3cm of tab] (est) {Extrapolación\\60 celdas};
+  \node[box, below=1.1cm of tab] (gate) {go/no-go\\umbral 72 h};
+  \node[box, below=of gate] (colab) {Sonda 1 ep.\\Colab/CUDA};
+  \node[box, below=of colab] (t13) {TASK-13 campaña};
+  \draw[arrow] (l) -- (tr);
+  \draw[arrow] (tr) -- (tab);
+  \draw[arrow] (tab) -- (sel);
+  \draw[arrow] (tab) -- (est);
+  \draw[arrow] (sel) -- (gate);
+  \draw[arrow] (est) -- (gate);
+  \draw[arrow] (gate) -- (colab);
+  \draw[arrow] (colab) -- (t13);
+\end{tikzpicture}
+\caption{Compuerta de viabilidad D2: ablación económica, extrapolación y \textit{go}
+condicionado a re-medición en Colab antes de la campaña factorial.}
+\label{fig:diagrama-d2-task11}
+\end{figure}
+
 \paragraph{Presupuesto extrapolado.}
-Con $L=6$ seleccionada (837 s/época medidos al 25\,\%), la extrapolación ponderada
-por fracción a las 60 celdas del diseño factorial ($3 \times 4 \times 5$) arroja
-\textbf{387 h} en \texttt{cpu}, frente a un umbral de viabilidad de 72 h.
+Con $L=6$ (842 s/época al 25\,\%, 15 épocas de campaña): HQCNN solo $\approx$ \textbf{129.8 h}
+en \texttt{cpu}; cota conservadora (3 modelos $\times$ 4 fracciones $\times$ 5 folds)
+$\approx$ \textbf{389.4 h} $>$ umbral 72 h $\Rightarrow$ \textit{no-go} local. No se recortan
+épocas sin evidencia. \textit{Go} condicionado a sonda de 1 época en \texttt{colab\_cuda}
+antes de TASK-13; D2 (HQCNN al 100\,\%) se confirma tras re-extrapolar. Con 4 qubits y
+\texttt{default.qubit}, el VQC no se acelera sustancialmente en GPU; Colab aporta sesión
+larga y GPU para baselines y backbone.
 
 \paragraph{Decisiones.}
 \begin{itemize}
-  \item \textbf{$L$ congelada:} 6 (\texttt{results/selected\_hparams.json}).
-  \item \textbf{Compuerta:} \textit{no-go} (387 h $>$ 72 h). Mitigación adoptada:
-        reducir épocas de campaña; D2 (HQCNN también al 100\,\%) queda \textit{ajustada}
-        y sujeta a revisión antes de TASK-13.
-  \item Mitigaciones evaluadas y descartadas sin adopción silenciosa: precálculo de
-        características (incompatible con augmentation, TASK-5), reducir $k$, restringir
-        el diseño factorial (rompe ANOVA de TASK-15).
+  \item \textbf{$L$ congelada:} 6 (\texttt{results/selected\_hparams.json}, commit
+        \texttt{5153d2c-dirty}).
+  \item \textbf{Compuerta:} \textit{no-go} en CPU local; \textit{go} condicionado a sonda
+        Colab/CUDA. \texttt{mitigacion\_adoptada}: \texttt{null} (sin recorte de épocas).
+  \item Mitigaciones evaluadas sin adopción silenciosa: precálculo de características
+        (incompatible con augmentation, TASK-5), reducir épocas, reducir $k$, restringir
+        diseño factorial (rompe ANOVA, TASK-15).
+  \item Historiales: \texttt{results/history/hqcnn\_0p25\_f0\_s42\_L2.json},
+        \texttt{\_L4.json}, \texttt{\_L6.json} (sufijo \texttt{\_L\{n\}} evita sobrescritura).
 \end{itemize}
 
 \paragraph{Limitaciones.}
-Un fold y 5 épocas no permiten inferencia estadística. La extrapolación usa tiempos
-del HQCNN como cota conservadora (baselines clásicas son más rápidas). Los tiempos en
-\texttt{cpu} no son directamente comparables con una campaña en \texttt{cuda} (Colab).
+Un fold y 5 épocas no permiten inferencia estadística. La extrapolación en \texttt{cpu}
+no predice tiempos en Colab/CUDA. La cota conservadora asume que las baselines cuestan
+como el HQCNN (las clásicas son más rápidas).

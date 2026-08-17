@@ -90,6 +90,11 @@ def test_escribir_corrida_csv_rechaza_cabecera_incompatible(tmp_path: Path) -> N
 
 def test_nombre_historial_incluye_semilla() -> None:
     registro = _registro_valido()
+    assert nombre_historial(registro) == "hqcnn_0p5_f2_s42_L4.json"
+
+
+def test_nombre_historial_sin_capas_vqc() -> None:
+    registro = _registro_valido(n_capas_vqc=None)
     assert nombre_historial(registro) == "hqcnn_0p5_f2_s42.json"
 
 
@@ -114,7 +119,7 @@ def test_escribir_historial_json(tmp_path: Path) -> None:
     ]
 
     ruta = escribir_historial_json(registro, historial, cfg)
-    assert ruta.name == "hqcnn_0p5_f2_s42.json"
+    assert ruta.name == "hqcnn_0p5_f2_s42_L4.json"
     payload = json.loads(ruta.read_text(encoding="utf-8"))
     assert len(payload) == 2
     assert set(payload[0]) == {

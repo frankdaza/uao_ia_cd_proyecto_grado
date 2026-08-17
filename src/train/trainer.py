@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,6 +13,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import confusion_matrix, f1_score
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from src.config import ExperimentConfig
 from src.logging.records import (
@@ -22,6 +25,8 @@ from src.logging.records import (
 )
 from src.logging.sinks import corrida_existe, obtener_commit_sha
 from src.logging.timing import medir_inferencia_ms_por_lote, sincronizar_dispositivo
+
+logger = logging.getLogger(__name__)
 
 
 def nombre_pesos(modelo: str, data_fraction: float, fold: int, semilla: int) -> str:
@@ -125,10 +130,21 @@ class Trainer:
         """
         historial: list[EpochRecord] = []
         inicio = time.perf_counter()
+        usar_tqdm = sys.stderr.isatty()
+        etiqueta = self._etiqueta_corrida()
 
         for epoca in range(self._cfg.epocas):
-            metricas_train = self._epoca_entrenamiento(cargador_train)
-            metricas_val = self._evaluar_epoca(cargador_val)
+            inicio_epoca = time.perf_counter()
+            metricas_train = self._epoca_entrenamiento(
+                cargador_train,
+                usar_tqdm=usar_tqdm,
+                desc=f"{etiqueta} train",
+            )
+            metricas_val = self._evaluar_epoca(
+                cargador_val,
+                usar_tqdm=usar_tqdm,
+                desc=f"{etiqueta} val",
+            )
             historial.append(
                 EpochRecord(
                     epoca=epoca,
@@ -137,6 +153,21 @@ class Trainer:
                     accuracy_train=metricas_train["accuracy_train"],
                     accuracy_val=metricas_val["accuracy_val"],
                 )
+            )
+            tiempo_epoca = time.perf_counter() - inicio_epoca
+            epocas_restantes = self._cfg.epocas - epoca - 1
+            eta_segundos = tiempo_epoca * epocas_restantes
+            logger.info(
+                "%s epoca %d/%d | loss_tr=%.4f loss_val=%.4f acc_val=%.4f | "
+                "%.1fs/ep ETA=%.0fs",
+                etiqueta,
+                epoca + 1,
+                self._cfg.epocas,
+                metricas_train["loss_train"],
+                metricas_val["loss_val"],
+                metricas_val["accuracy_val"],
+                tiempo_epoca,
+                eta_segundos,
             )
 
         sincronizar_dispositivo(self._dispositivo)
@@ -226,14 +257,34 @@ class Trainer:
             inference_ms_per_batch=0.0,
         )
 
-    def _epoca_entrenamiento(self, cargador: DataLoader) -> dict[str, float]:
+    def _etiqueta_corrida(self) -> str:
+        """Construye etiqueta corta para logs y barras de progreso."""
+        n_capas = getattr(self._modelo, "n_capas_vqc", None)
+        if n_capas is not None:
+            return f"{self._cfg.modelo} L={n_capas}"
+        return self._cfg.modelo
+
+    def _epoca_entrenamiento(
+        self,
+        cargador: DataLoader,
+        *,
+        usar_tqdm: bool = False,
+        desc: str = "train",
+    ) -> dict[str, float]:
         """Ejecuta una época de entrenamiento y devuelve pérdida y exactitud."""
         self._modelo.train()
         perdida_total = 0.0
         correctos = 0
         total = 0
 
-        for entradas, etiquetas in cargador:
+        iterador = tqdm(
+            cargador,
+            desc=desc,
+            disable=not usar_tqdm,
+            leave=False,
+            file=sys.stderr,
+        )
+        for entradas, etiquetas in iterador:
             entradas = entradas.to(self._dispositivo)
             etiquetas = etiquetas.to(self._dispositivo)
             self._optimizador.zero_grad()
@@ -255,15 +306,29 @@ class Trainer:
             "accuracy_train": correctos / total,
         }
 
-    def _evaluar_epoca(self, cargador: DataLoader) -> dict[str, float]:
+    def _evaluar_epoca(
+        self,
+        cargador: DataLoader,
+        *,
+        usar_tqdm: bool = False,
+        desc: str = "val",
+    ) -> dict[str, float]:
         """Evalúa pérdida y exactitud en validación para el historial por época."""
         self._modelo.eval()
         perdida_total = 0.0
         correctos = 0
         total = 0
 
+        iterador = tqdm(
+            cargador,
+            desc=desc,
+            disable=not usar_tqdm,
+            leave=False,
+            file=sys.stderr,
+        )
+
         with torch.inference_mode():
-            for entradas, etiquetas in cargador:
+            for entradas, etiquetas in iterador:
                 entradas = entradas.to(self._dispositivo)
                 etiquetas = etiquetas.to(self._dispositivo)
                 logits = self._modelo(entradas)

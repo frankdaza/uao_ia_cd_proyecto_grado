@@ -62,3 +62,9 @@ results/figures/*
 !results/figures/.gitkeep
 !results/figures/distribucion_clases.png
 !results/figures/ejemplos_aumento.png
+!results/figures/ablacion_L_curvas_perdida.png
+!results/ablacion_L.csv
+!results/selected_hparams.json
+!results/history/
+results/history/*
+!results/history/*.json

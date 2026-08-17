@@ -57,6 +57,14 @@ def test_estimar_horas_campana_pondera_por_fraccion() -> None:
     assert horas == pytest.approx(esperado_seg / 3600.0)
 
 
+def test_estimar_horas_campana_hqcnn_solo() -> None:
+    horas_tres = estimar_horas_campana(100.0, 15, 0.25, fracciones=FRACCIONES)
+    horas_uno = estimar_horas_campana(
+        100.0, 15, 0.25, fracciones=FRACCIONES, n_modelos=1
+    )
+    assert horas_uno == pytest.approx(horas_tres / 3.0)
+
+
 def test_estimar_horas_campana_rechaza_fraccion_cero() -> None:
     with pytest.raises(ValueError, match="fraccion_referencia"):
         estimar_horas_campana(10.0, 15, 0.0)
@@ -78,17 +86,18 @@ def test_seleccionar_profundidad_rechaza_lista_vacia() -> None:
 
 
 def test_decidir_viabilidad_go() -> None:
-    resultado = decidir_viabilidad(71.9, umbral_horas=72.0)
+    resultado = decidir_viabilidad(71.9, 24.0, umbral_horas=72.0)
     assert resultado.decision == "go"
     assert resultado.decision_d2 == "confirmada"
     assert resultado.mitigacion_adoptada is None
 
 
 def test_decidir_viabilidad_no_go() -> None:
-    resultado = decidir_viabilidad(72.1, umbral_horas=72.0)
+    resultado = decidir_viabilidad(72.1, 24.0, umbral_horas=72.0)
     assert resultado.decision == "no-go"
     assert resultado.decision_d2 == "ajustada"
-    assert resultado.mitigacion_adoptada == "reducir_epocas_campana"
+    assert resultado.mitigacion_adoptada is None
+    assert "sonda" in resultado.notas.lower()
 
 
 def test_guardar_ablacion_csv_esquema(tmp_path: Path) -> None:

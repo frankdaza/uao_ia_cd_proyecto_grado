@@ -144,6 +144,7 @@ def test_trainer_entrena_hqcnn_una_epoca(tmp_path: Path) -> None:
 
     cfg = ExperimentConfig(
         modelo="hqcnn",
+        n_capas=4,
         epocas=1,
         batch_size=_BATCH,
         semilla=42,

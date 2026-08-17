@@ -23,6 +23,7 @@ from src.models.vqc import N_QUBITS, norma_gradiente_inicial
 from src.train.dataloading import construir_loaders_para_fold
 from src.train.trainer import Trainer
 from src.utils.device import log_dispositivo
+from src.utils.logging import configurar_logging_cli
 from src.utils.seed import set_seed
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ N_MODELOS_CAMPANA: int = 3
 N_FOLDS_CAMPANA: int = 5
 N_CELDAS_CAMPANA: int = N_MODELOS_CAMPANA * len(FRACCIONES) * N_FOLDS_CAMPANA
 SIMULADOR_CUANTICO: str = "default.qubit"
+DISPOSITIVO_CAMPANA_PREVISTO: str = "colab_cuda"
 
 CRITERIO_SELECCION: str = (
     "Mayor F1 macro de validacion al final del presupuesto reducido; "
@@ -241,50 +243,59 @@ def seleccionar_profundidad(
 
 
 def decidir_viabilidad(
-    horas_estimadas: float,
+    horas_estimadas_conservadora: float,
+    horas_hqcnn_solo: float,
     *,
     umbral_horas: float = UMBRAL_HORAS_CAMPANA,
+    dispositivo_ablacion: str = "cpu",
 ) -> ResultadoViabilidad:
     """Toma la decisión go/no-go sobre la campaña factorial.
 
     Parameters
     ----------
-    horas_estimadas : float
-        Horas extrapoladas para las 60 celdas.
+    horas_estimadas_conservadora : float
+        Horas extrapoladas asumiendo que las 3 modelos cuestan como el HQCNN.
+    horas_hqcnn_solo : float
+        Horas extrapoladas solo para celdas HQCNN (15 épocas, mismo dispositivo).
     umbral_horas : float
         Límite de viabilidad acordado (72 h).
+    dispositivo_ablacion : str
+        Dispositivo donde se midió la ablación (``cpu``, ``cuda``, etc.).
 
     Returns
     -------
     ResultadoViabilidad
         Decisión, estado de D2 y mitigaciones evaluadas.
     """
-    if horas_estimadas <= umbral_horas:
+    if horas_estimadas_conservadora <= umbral_horas:
         return ResultadoViabilidad(
             decision="go",
-            horas_estimadas=horas_estimadas,
+            horas_estimadas=horas_estimadas_conservadora,
             umbral_horas=umbral_horas,
             decision_d2="confirmada",
             mitigaciones_evaluadas=MITIGACIONES_EVALUADAS,
             mitigacion_adoptada=None,
             notas=(
-                f"La extrapolacion ({horas_estimadas:.1f} h) queda dentro del umbral "
-                f"de {umbral_horas:.0f} h. Se confirma entrenar HQCNN al 100 % (D2)."
+                f"La extrapolacion conservadora ({horas_estimadas_conservadora:.1f} h) "
+                f"queda dentro del umbral de {umbral_horas:.0f} h en {dispositivo_ablacion}. "
+                "Se confirma entrenar HQCNN al 100 % (D2). Sonda de 1 epoca en "
+                f"{DISPOSITIVO_CAMPANA_PREVISTO} antes de TASK-13."
             ),
         )
 
     return ResultadoViabilidad(
         decision="no-go",
-        horas_estimadas=horas_estimadas,
+        horas_estimadas=horas_estimadas_conservadora,
         umbral_horas=umbral_horas,
         decision_d2="ajustada",
         mitigaciones_evaluadas=MITIGACIONES_EVALUADAS,
-        mitigacion_adoptada="reducir_epocas_campana",
+        mitigacion_adoptada=None,
         notas=(
-            f"La extrapolacion ({horas_estimadas:.1f} h) supera el umbral de "
-            f"{umbral_horas:.0f} h. Se adopta reducir epocas de campana como "
-            "mitigacion minima; D2 (HQCNN al 100 %) queda sujeta a revision antes "
-            "de TASK-13."
+            f"En {dispositivo_ablacion}: HQCNN solo ~{horas_hqcnn_solo:.1f} h, "
+            f"conservadora (3 modelos) ~{horas_estimadas_conservadora:.1f} h > "
+            f"{umbral_horas:.0f} h. No se recortan epocas sin evidencia. "
+            f"Go condicionado a sonda de 1 epoca en {DISPOSITIVO_CAMPANA_PREVISTO} "
+            "antes de TASK-13; D2 (HQCNN al 100 %) se confirma tras re-extrapolar."
         ),
     )
 
@@ -457,22 +468,6 @@ def ejecutar_ablacion(cfg_base: ExperimentConfig | None = None) -> dict[str, Any
         registro, historial = entrenador.ajustar(cargador_train, cargador_val)
 
         escribir_historial_json(registro, historial, cfg)
-        fraccion_txt = str(cfg.data_fraction).replace(".", "p")
-        ruta_hist_estandar = (
-            cfg.raiz_resultados
-            / "history"
-            / f"hqcnn_{fraccion_txt}_f{FOLD_ABLACION}_s{cfg.semilla}.json"
-        )
-        if ruta_hist_estandar.exists():
-            ruta_hist_ablacion = (
-                cfg.raiz_resultados
-                / "history"
-                / f"hqcnn_ablacion_L{n_capas}_{fraccion_txt}_f{FOLD_ABLACION}_s{cfg.semilla}.json"
-            )
-            ruta_hist_ablacion.write_text(
-                ruta_hist_estandar.read_text(encoding="utf-8"),
-                encoding="utf-8",
-            )
 
         fila = _fila_desde_registro(registro, n_capas=n_capas, norma_gradiente=norma)
         filas.append(fila)
@@ -491,12 +486,22 @@ def ejecutar_ablacion(cfg_base: ExperimentConfig | None = None) -> dict[str, Any
     fila_seleccionada = next(
         fila for fila in filas if fila["n_capas"] == n_capas_seleccionada
     )
-    horas_estimadas = estimar_horas_campana(
+    horas_conservadora = estimar_horas_campana(
         fila_seleccionada["segundos_por_epoca"],
         epocas_campana=cfg_base.epocas,
         fraccion_referencia=FRACCION_ABLACION,
     )
-    viabilidad = decidir_viabilidad(horas_estimadas)
+    horas_hqcnn_solo = estimar_horas_campana(
+        fila_seleccionada["segundos_por_epoca"],
+        epocas_campana=cfg_base.epocas,
+        fraccion_referencia=FRACCION_ABLACION,
+        n_modelos=1,
+    )
+    viabilidad = decidir_viabilidad(
+        horas_conservadora,
+        horas_hqcnn_solo,
+        dispositivo_ablacion=nombre_dispositivo,
+    )
 
     ruta_csv = cfg_base.raiz_resultados / "ablacion_L.csv"
     ruta_json = cfg_base.raiz_resultados / "selected_hparams.json"
@@ -521,7 +526,11 @@ def ejecutar_ablacion(cfg_base: ExperimentConfig | None = None) -> dict[str, Any
     presupuesto = {
         "segundos_por_epoca_referencia": fila_seleccionada["segundos_por_epoca"],
         "L_referencia": n_capas_seleccionada,
-        "horas_campana_estimadas": round(horas_estimadas, 2),
+        "horas_campana_estimadas": round(horas_conservadora, 2),
+        "horas_hqcnn_solo": round(horas_hqcnn_solo, 2),
+        "dispositivo_ablacion": nombre_dispositivo,
+        "dispositivo_campana_previsto": DISPOSITIVO_CAMPANA_PREVISTO,
+        "sonda_1_epoca_pendiente": True,
         "n_celdas": N_CELDAS_CAMPANA,
         "umbral_horas": UMBRAL_HORAS_CAMPANA,
         "decision": viabilidad.decision,
@@ -540,17 +549,19 @@ def ejecutar_ablacion(cfg_base: ExperimentConfig | None = None) -> dict[str, Any
     )
 
     logger.info(
-        "L congelada=%d | decision=%s | horas estimadas=%.1f",
+        "L congelada=%d | decision=%s | HQCNN solo=%.1f h | conservadora=%.1f h",
         n_capas_seleccionada,
         viabilidad.decision,
-        horas_estimadas,
+        horas_hqcnn_solo,
+        horas_conservadora,
     )
 
     return {
         "filas": filas,
         "n_capas_seleccionada": n_capas_seleccionada,
         "viabilidad": viabilidad,
-        "horas_estimadas": horas_estimadas,
+        "horas_estimadas": horas_conservadora,
+        "horas_hqcnn_solo": horas_hqcnn_solo,
         "rutas": {
             "csv": ruta_csv,
             "json": ruta_json,
@@ -561,7 +572,7 @@ def ejecutar_ablacion(cfg_base: ExperimentConfig | None = None) -> dict[str, Any
 
 def main() -> None:
     """Punto de entrada CLI para la ablación TASK-11."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    configurar_logging_cli()
     ejecutar_ablacion()
 
 

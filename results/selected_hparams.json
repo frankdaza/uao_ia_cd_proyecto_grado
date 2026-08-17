@@ -1,0 +1,54 @@
+{
+  "n_capas": 6,
+  "criterio_seleccion": "Mayor F1 macro de validacion al final del presupuesto reducido; ante diferencias <= 0.02, preferir la L mas baja por costo y entrenabilidad.",
+  "fecha": "2026-08-17T19:21:14.396975+00:00",
+  "commit_sha": "5153d2c-dirty",
+  "protocolo_ablacion": {
+    "fold": 0,
+    "data_fraction": 0.25,
+    "epocas_ablacion": 5,
+    "epocas_campana": 15,
+    "semilla": 42,
+    "simulador_cuantico": "default.qubit",
+    "dispositivo": "cpu",
+    "profundidades_evaluadas": [
+      2,
+      4,
+      6
+    ],
+    "nota_metodologica": "Decision de diseno instrumentada; no tiene significancia estadistica (no A8)."
+  },
+  "presupuesto": {
+    "segundos_por_epoca_referencia": 841.9716935749996,
+    "L_referencia": 6,
+    "horas_campana_estimadas": 389.41,
+    "horas_hqcnn_solo": 129.8,
+    "dispositivo_ablacion": "cpu",
+    "dispositivo_campana_previsto": "colab_cuda",
+    "sonda_1_epoca_pendiente": true,
+    "n_celdas": 60,
+    "umbral_horas": 72.0,
+    "decision": "no-go",
+    "decision_d2": "ajustada",
+    "mitigaciones_evaluadas": [
+      {
+        "nombre": "precalcular_caracteristicas_backbone",
+        "impacto": "Incompatible con aumento de datos en cada epoca; invalida comparacion con el metodo declarado salvo desactivar augmentation (TASK-5)."
+      },
+      {
+        "nombre": "reducir_epocas_campana",
+        "impacto": "Reduce costo pero puede dejar modelos sin converger; sesga la comparacion frente a baselines con el mismo presupuesto."
+      },
+      {
+        "nombre": "reducir_k_folds",
+        "impacto": "Menos folds debilita la estimacion de varianza y condiciona la ANOVA de dos vias (TASK-15)."
+      },
+      {
+        "nombre": "restringir_diseno_factorial",
+        "impacto": "Eliminar celdas rompe el balance del diseno y el termino de interaccion modelo x fraccion (decision D2)."
+      }
+    ],
+    "mitigacion_adoptada": null,
+    "notas": "En cpu: HQCNN solo ~129.8 h, conservadora (3 modelos) ~389.4 h > 72 h. No se recortan epocas sin evidencia. Go condicionado a sonda de 1 epoca en colab_cuda antes de TASK-13; D2 (HQCNN al 100 %) se confirma tras re-extrapolar."
+  }
+}

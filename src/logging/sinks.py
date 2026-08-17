@@ -124,7 +124,10 @@ def nombre_historial(registro: RunRecord) -> str:
         Nombre con modelo, fracción, fold y semilla.
     """
     fraccion = str(registro.data_fraction).replace(".", "p")
-    return f"{registro.modelo}_{fraccion}_f{registro.fold}_s{registro.semilla}.json"
+    base = f"{registro.modelo}_{fraccion}_f{registro.fold}_s{registro.semilla}"
+    if registro.n_capas_vqc is not None:
+        return f"{base}_L{registro.n_capas_vqc}.json"
+    return f"{base}.json"
 
 
 def escribir_historial_json(

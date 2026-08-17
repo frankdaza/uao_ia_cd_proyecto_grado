@@ -102,10 +102,18 @@ Esta sección consolida las decisiones congeladas a medida que avanza el proyect
         \item Lectura literal de A8 (submuestrear antes de partir) rechazada: varianza de validación dominaría al 10\,\%.
     \end{itemize}
     \item \textbf{D2} --- Profundidad $L$ del VQC y presupuesto de cómputo (tarea 11).
-    \item \textbf{Go/no-go} --- Criterio de viabilidad antes de la campaña experimental completa.
+    Ver~\ref{hallazgo:task-11} y Figura~\ref{fig:diagrama-d2-task11}.
+    \begin{itemize}
+        \item Ablación económica: $L \in \{2,4,6\}$, fold 0, fracción 25\,\%, 5 épocas (no A8).
+        \item Criterio pre-declarado: mayor F1 macro; empate $\leq 0{,}02$ favorece $L$ menor.
+        \item $L$ congelada en \texttt{results/selected\_hparams.json} (valor y artefactos en TASK-11).
+        \item Extrapolación: horas HQCNN solo vs.\ cota conservadora ($3$ modelos); umbral 72 h.
+        \item \textit{No-go} en CPU local si supera umbral; \textit{go} condicionado a sonda de 1 época
+              en Colab/CUDA (TASK-13) antes de las 60 celdas.
+        \item Sin recorte de épocas sin evidencia de convergencia; D2 (HQCNN al 100\,\%) se confirma tras re-extrapolar.
+        \item Historiales por $L$ en \texttt{results/history/} con sufijo \texttt{\_L\{n\}}.
+    \end{itemize}
 \end{itemize}
-
-Las entradas D2 y go/no-go se completarán conforme se ejecuten las tareas 11 y 13.
 
 \bibliographystyle{apalike}
 \bibliography{../proyecto_de_grado/Referencias}

@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:10'
-updated_date: '2026-08-17 05:42'
+updated_date: '2026-08-17 19:22'
 labels:
   - qml
   - bitacora
@@ -95,21 +95,7 @@ flowchart TB
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-**Trampas conocidas.**
-
-- **La mitigación más tentadora tiene un costo metodológico oculto.** Precalcular las características del backbone congelado elimina el paso convolucional en cada época y puede acelerar la campaña de forma drástica; pero es **incompatible con el aumento de datos**, porque el aumento cambia la imagen en cada época y por tanto sus características. Si se adopta, hay que declararlo: el experimento pasa a ser "sin aumento" y task-5 debe reflejarlo, o hay que cachear varias variantes aumentadas por imagen. Adoptarla en silencio invalidaría la comparación con la literatura y la propia descripción del método.
-- Medir la norma del gradiente sobre **todos** los parámetros no sirve: la señal de meseta árida está en el bloque cuántico. Promediar sobre los pesos del VQC exclusivamente.
-- Una ablación con un solo fold **no** tiene significancia estadística. Reportarla como resultado sería un error de interpretación; es una decisión de diseño instrumentada y así debe presentarse en la bitácora y en el documento final.
-- Concluir "L = 6 es peor" cuando lo que ocurrió es que no convergió en el presupuesto reducido es el error más probable de esta tarea. De ahí la exigencia de reportar la curva de pérdida junto con el F1.
-- Si la ablación usa `lightning.qubit` y la campaña usa `default.qubit`, los tiempos medidos **no** son extrapolables: cambia el camino de diferenciación. Elegir un simulador, declararlo y usar el mismo en ambas.
-- La extrapolación desde la fracción del 25 % es una **cota inferior**: las celdas al 100 % procesan cuatro veces más muestras por época. Aplicar el factor correspondiente por fracción en lugar de multiplicar por 60 sin más.
-- El tiempo en Colab no es estable entre sesiones (GPU asignada, contención). Registrar el dispositivo con cada medición y, si es posible, medir en el mismo entorno donde correrá la campaña.
-
-**Regla de cierre.** `L` queda congelado antes de iniciar task-13. Cambiar `L` a mitad de la campaña invalidaría las celdas ya ejecutadas, no solo la afectada.
-
-Plan corregido: HQCNN directo, fold=0, estimacion ponderada por fraccion, umbral 72 h, salida en ablacion_L.csv (no experiments.csv).
-
-Validacion: ablacion ejecutada en cpu (~92 min); artefactos en results/ablacion_L.csv, selected_hparams.json, figures/ablacion_L_curvas_perdida.png; L=6 congelada; no-go 387h>72h; pytest tests/test_ablacion_L.py 11 passed; hallazgo en h1_arquitectura.tex.
+Re-ejecutada ablacion con historiales L en nombre (hqcnn_0p25_f0_s42_L{n}.json). L=6 congelada (F1 0.817). No-go CPU: HQCNN solo 129.8h, conservadora 389.4h. Go condicionado sonda Colab/CUDA; mitigacion_adoptada null. Trainer con tqdm+log por epoca. commit 5153d2c-dirty en selected_hparams.json.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

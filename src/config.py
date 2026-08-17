@@ -1,7 +1,13 @@
 """Configuración centralizada del experimento."""
 
+from __future__ import annotations
+
+import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
+
+RUTA_HPARAMS_CONGELADOS: Path = Path("results/selected_hparams.json")
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +49,7 @@ class ExperimentConfig:
     modelo: str = "hqcnn"
     n_clases: int = 4
     n_qubits: int = 4
-    n_capas: int = 4
+    n_capas: int = 6
     data_fraction: float = 1.0
     n_folds: int = 5
     epocas: int = 15
@@ -64,3 +70,51 @@ class ExperimentConfig:
             self.raiz_figuras,
         ):
             ruta.mkdir(parents=True, exist_ok=True)
+
+
+def cargar_hparams_congelados(
+    ruta: Path = RUTA_HPARAMS_CONGELADOS,
+) -> dict[str, Any]:
+    """Lee hiperparámetros congelados tras la ablación TASK-11.
+
+    Parameters
+    ----------
+    ruta : Path
+        Ruta a ``selected_hparams.json``.
+
+    Returns
+    -------
+    dict[str, Any]
+        Contenido del JSON con ``n_capas``, protocolo y presupuesto.
+
+    Raises
+    ------
+    FileNotFoundError
+        Si el archivo no existe (ablación aún no ejecutada).
+    ValueError
+        Si falta ``n_capas`` en el payload.
+    """
+    if not ruta.is_file():
+        raise FileNotFoundError(
+            f"No existe {ruta}. Ejecuta la ablacion TASK-11 antes de la campaña."
+        )
+    payload = json.loads(ruta.read_text(encoding="utf-8"))
+    if "n_capas" not in payload:
+        raise ValueError(f"El archivo {ruta} no contiene 'n_capas'.")
+    return payload
+
+
+def n_capas_congelada(ruta: Path = RUTA_HPARAMS_CONGELADOS) -> int:
+    """Devuelve la profundidad ``L`` congelada en ``selected_hparams.json``.
+
+    Parameters
+    ----------
+    ruta : Path
+        Ruta al JSON de hiperparámetros.
+
+    Returns
+    -------
+    int
+        Valor de ``n_capas`` congelado.
+    """
+    return int(cargar_hparams_congelados(ruta)["n_capas"])
