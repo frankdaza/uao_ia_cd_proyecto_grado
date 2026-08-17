@@ -8,6 +8,8 @@ from src.models.backbones import (
     obtener_version_pesos,
     parametros_entrenables,
 )
+from src.models.baseline import ClassicalBaseline
+from src.models.factory import build_model
 from src.models.heads import CabeceraReduccion
 from src.models.hqcnn import HQCNN, contar_parametros_por_bloque, verificar_gradiente
 from src.models.vqc import (
@@ -33,7 +35,9 @@ __all__ = [
     "RUTA_DIAGRAMA_CIRCUITO",
     "VERSIONES_PESOS",
     "CabeceraReduccion",
+    "ClassicalBaseline",
     "HQCNN",
+    "build_model",
     "contar_parametros_por_bloque",
     "verificar_gradiente",
     "build_backbone",

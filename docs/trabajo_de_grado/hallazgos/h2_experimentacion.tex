@@ -4,5 +4,99 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-12: Líneas base clásicas con el 100% del conjunto (A6)
 % TASK-13: Campaña experimental k-fold en escenarios de escasez (A8)
+
+\subsubsection{Task-12: Líneas base clásicas con el 100\% del conjunto (A6)}
+\label{hallazgo:task-12}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A6 --- Entrenamiento de las líneas base clásicas (m-2) \\\hline
+\textbf{Artefactos} & \texttt{src/models/baseline.py}, \texttt{src/models/factory.py}, \texttt{src/experiments/baselines.py}, \texttt{tests/test\_baseline.py}, \texttt{results/experiments.csv}, \texttt{results/baselines\_summary.csv}, \texttt{models/*.pt}, \texttt{results/history/*.json} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Establecer el límite superior de exactitud contra el cual se interpretará el HQCNN y el resto
+de la campaña factorial (TASK-13). Las líneas base EfficientNet-B0 y ResNet-50 comparten el
+mismo \texttt{Trainer} (TASK-8), las mismas particiones de \texttt{results/splits.json}
+(TASK-6) y el mismo presupuesto de 15 épocas, con extractor ImageNet congelado y cabeza
+\texttt{Linear(dim $\rightarrow$ 4)} (TASK-7).
+
+\paragraph{Procedimiento.}
+\texttt{ClassicalBaseline} envuelve \texttt{build\_backbone} + \texttt{CabeceraReduccion} y
+mantiene el backbone en \texttt{eval()} durante el entrenamiento. La fábrica
+\texttt{build\_model(nombre, cfg)} unifica la construcción para baselines y HQCNN (sin ramas
+\texttt{if} en el orquestador). Versiones de pesos: EfficientNet-B0
+\texttt{IMAGENET1K\_V1}~\cite{tan2019efficientnet}; ResNet-50 \texttt{IMAGENET1K\_V2}~\cite{he2016deep}
+(registradas en \texttt{VERSIONES\_PESOS}). Dispositivo de ejecución: \texttt{mps} (macOS).
+Antes de cada corrida, \texttt{verificar\_indices\_fold} comprueba que los índices cargados
+coinciden con \texttt{splits.json}. Ejecución:
+\begin{verbatim}
+uv run python -m src.experiments.baselines
+uv run pytest tests/test_baseline.py -q
+\end{verbatim}
+
+\paragraph{Resultados por fold (validación, fracción 1.00).}
+\begin{center}
+\small
+\begin{tabular}{llrrrr}\hline
+\textbf{Modelo} & \textbf{Fold} & \textbf{Acc. val} & \textbf{F1 macro} & \textbf{F1 pond.} & \textbf{Tiempo (s)} \\\hline
+EfficientNet-B0 & 0 & 0.9376 & 0.9368 & 0.9378 & 640 \\
+EfficientNet-B0 & 1 & 0.9390 & 0.9377 & 0.9387 & 643 \\
+EfficientNet-B0 & 2 & 0.9346 & 0.9335 & 0.9347 & 645 \\
+EfficientNet-B0 & 3 & 0.9368 & 0.9360 & 0.9371 & 663 \\
+EfficientNet-B0 & 4 & 0.9368 & 0.9356 & 0.9368 & 782 \\
+ResNet-50 & 0 & 0.9190 & 0.9168 & 0.9181 & 1028 \\
+ResNet-50 & 1 & 0.9152 & 0.9133 & 0.9148 & 982 \\
+ResNet-50 & 2 & 0.9257 & 0.9240 & 0.9252 & 987 \\
+ResNet-50 & 3 & 0.9182 & 0.9164 & 0.9177 & 1012 \\
+ResNet-50 & 4 & 0.9234 & 0.9218 & 0.9231 & 942 \\\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Agregación sobre 5 folds (media $\pm$ desv. estándar).}
+\begin{center}
+\small
+\begin{tabular}{lrrr}\hline
+\textbf{Métrica} & \textbf{EfficientNet-B0} & \textbf{ResNet-50} \\\hline
+Exactitud val. & $0.9369 \pm 0.0012$ & $0.9203 \pm 0.0039$ \\
+F1 macro & $0.9358 \pm 0.0012$ & $0.9185 \pm 0.0040$ \\
+F1 ponderado & $0.9370 \pm 0.0011$ & $0.9198 \pm 0.0039$ \\
+Brecha $G$ & $0.0273 \pm 0.0021$ & $0.0229 \pm 0.0037$ \\
+Inferencia (ms/lote) & $52.7 \pm 14.8$ & $140.9 \pm 73.0$ \\\hline
+\end{tabular}
+\end{center}
+
+Pruebas automatizadas: \textbf{19 passed} (\texttt{test\_baseline.py} + \texttt{test\_backbones.py}).
+Diez celdas en \texttt{experiments.csv} con clave \texttt{(modelo, 1.00, fold, semilla=42)}.
+
+\paragraph{Contraste con la literatura.}
+\citet{haddou2025hqcm} reportan 96.48\,\% de precisión con HQCM-EBTC sobre el mismo
+\textit{dataset}, entrenando una CNN personalizada desde cero con el conjunto completo y el
+\textit{split} original \texttt{Training/Testing}. \citet{khan2024brain} evalúan un HQCNN
+híbrido en condiciones distintas (arquitectura, preprocesamiento y partición).
+\textbf{Los números no son directamente comparables} con los de esta tarea porque:
+(i)~validación cruzada estratificada de 5 folds frente a un único \textit{holdout};
+(ii)~extractor preentrenado congelado frente a entrenamiento completo del backbone;
+(iii)~cuello de botella a 4 dimensiones (restricción del diseño híbrido, ver
+Hallazgo~\ref{hallazgo:task-7}). La exactitud observada ($\sim$93.7\,\% EfficientNet-B0,
+$\sim$92.0\,\% ResNet-50) no indica fallo de implementación: es coherente con la restricción
+de entrenar solo la cabeza lineal sobre características fijas.
+
+\paragraph{Interpretación.}
+EfficientNet-B0 supera a ResNet-50 bajo la misma restricción de extractor congelado y la
+misma cabeza, con menor varianza entre folds (desv.\ std.\ de exactitud 0.12 vs.\ 0.39 puntos
+porcentuales). La brecha de generalización $G$ se mantiene baja ($\sim$2--3 puntos),
+coherente con pocos parámetros entrenables. Estas 10 celdas quedan disponibles para
+reutilización por TASK-13 sin reentrenamiento (\texttt{corrida\_completada}).
+
+\paragraph{Decisiones.}
+ResNet-50 con \texttt{IMAGENET1K\_V2} (no intercambiable con V1 en comparaciones
+bibliográficas). Dispositivo \texttt{mps} para baselines clásicas (a diferencia del HQCNN,
+que usa CPU por inestabilidad de \texttt{TorchLayer} en MPS, Hallazgo~\ref{hallazgo:task-11}).
+
+\paragraph{Limitaciones.}
+El extractor congelado limita el techo alcanzable: la tabla \textbf{no} representa el máximo
+de EfficientNet-B0 o ResNet-50 con \textit{fine-tuning} completo. Los 5 folds comparten
+observaciones (TASK-6); la desviación estándar entre folds mide estabilidad de la partición,
+no error de muestreo independiente. El tiempo de inferencia de ResNet-50 es mayor por la
+mayor dimensión latente (2048 vs.\ 1280) y el costo del \textit{forward} congelado.
