@@ -1,11 +1,11 @@
 ---
 id: TASK-9
 title: Clasificador cuántico variacional de 4 qubits (A2)
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:08'
-updated_date: '2026-08-17 01:08'
+updated_date: '2026-08-17 02:43'
 labels:
   - qml
   - bitacora
@@ -27,7 +27,7 @@ documentation:
   - AGENTS.md
 priority: high
 type: feature
-ordinal: 9000
+ordinal: 1000
 ---
 
 ## Description
@@ -66,23 +66,23 @@ flowchart LR
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 El circuito usa 4 qubits, AngleEmbedding, StronglyEntanglingLayers con L tomado de la configuración y mediciones locales expval Z, una por qubit
-- [ ] #2 El QNode declara interface=torch y diff_method=parameter-shift sobre default.qubit, y usa qml.Z en lugar de la API deprecada qml.PauliZ
-- [ ] #3 El mapeo qubit a clase está fijado en una constante única y documentado, y coincide con el orden de clases del Dataset
-- [ ] #4 La forma de los pesos se obtiene de StronglyEntanglingLayers.shape y no está escrita a mano
-- [ ] #5 La inicialización es cercana a la identidad con varianza controlada y su elección está justificada con la literatura de mesetas áridas
-- [ ] #6 La norma del gradiente inicial es medible y se reporta para L en 2, 4 y 6 como diagnóstico previo a la ablación
-- [ ] #7 La elección de mediciones locales frente a un observable global está argumentada con cita explícita
-- [ ] #8 El diagrama del circuito se genera programáticamente, se guarda en docs/trabajo_de_grado/Figuras/ y se incluye en la bitácora
-- [ ] #9 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-9}
+- [x] #1 El circuito usa 4 qubits, AngleEmbedding, StronglyEntanglingLayers con L tomado de la configuración y mediciones locales expval Z, una por qubit
+- [x] #2 El QNode declara interface=torch y diff_method=parameter-shift sobre default.qubit, y usa qml.Z en lugar de la API deprecada qml.PauliZ
+- [x] #3 El mapeo qubit a clase está fijado en una constante única y documentado, y coincide con el orden de clases del Dataset
+- [x] #4 La forma de los pesos se obtiene de StronglyEntanglingLayers.shape y no está escrita a mano
+- [x] #5 La inicialización es cercana a la identidad con varianza controlada y su elección está justificada con la literatura de mesetas áridas
+- [x] #6 La norma del gradiente inicial es medible y se reporta para L en 2, 4 y 6 como diagnóstico previo a la ablación
+- [x] #7 La elección de mediciones locales frente a un observable global está argumentada con cita explícita
+- [x] #8 El diagrama del circuito se genera programáticamente, se guarda en docs/trabajo_de_grado/Figuras/ y se incluye en la bitácora
+- [x] #9 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-9}
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #2 Cada decisión de diseño del circuito tiene su justificación citada: sin cajas negras
-- [ ] #3 Sin APIs deprecadas de PennyLane
-- [ ] #4 No se cita anzatz_vqc_2024 como respaldo del ansatz
+- [x] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #2 Cada decisión de diseño del circuito tiene su justificación citada: sin cajas negras
+- [x] #3 Sin APIs deprecadas de PennyLane
+- [x] #4 No se cita anzatz_vqc_2024 como respaldo del ansatz
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -177,6 +177,14 @@ figura.savefig("docs/trabajo_de_grado/Figuras/circuito_vqc.png", dpi=200, bbox_i
 
 6. Verificar que el circuito acepta el rango de entradas que producirá la capa densa acotada de task-10 y que la salida está en [-1, 1] por construcción.
 7. Registrar el hallazgo en `hallazgos/h1_arquitectura.tex`: diagrama del circuito, mapeo qubit-clase, tabla de norma de gradiente por `L` y la argumentación de las mediciones locales con su cita.
+
+8. Derivar MAPEO_QUBIT_CLASE de CLASES_ORDEN (src/logging/records.py) en lugar de dict hardcodeado.
+
+9. Exportar forma_pesos_vqc(n_capas) para TorchLayer en TASK-10.
+
+10. Crear tests/test_vqc.py (convención TASK-7/TASK-8).
+
+11. Usar set_seed(42) en diagnosticar_normas_gradiente() y cerrar figuras matplotlib con plt.close(fig).
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -194,4 +202,12 @@ figura.savefig("docs/trabajo_de_grado/Figuras/circuito_vqc.png", dpi=200, bbox_i
 - El mapeo qubit a clase debe estar en **una sola** constante. Si el orden de clases del `Dataset` (alfabético por carpeta) difiere del mapeo asumido aquí, las métricas por clase quedan permutadas y la matriz de confusión miente sin dar error.
 
 **Prohibición explícita del proyecto.** No citar `anzatz_vqc_2024` como respaldo del ansatz: es una tesis de maestría sobre calibración de sensores y no sostiene la afirmación sobre *Strongly Entangling Layers*.
+
+MAPEO_QUBIT_CLASE derivado de CLASES_ORDEN. schuld2020circuit añadido con DOI 10.1103/PhysRevA.101.032308. Normas gradiente (semilla 42, 20 muestras): L=2→1.237, L=4→1.730, L=6→2.107. pytest test_vqc.py: 7 passed; suite completa: 64 passed.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implementado VQC de 4 qubits en src/models/vqc.py (AngleEmbedding Y, StronglyEntanglingLayers, mediciones locales Z, init cercana a identidad, diagnóstico de gradiente y diagrama). tests/test_vqc.py (7 passed), figura circuito_vqc.png, hallazgo en h1_arquitectura.tex, cita schuld2020circuit en Referencias.bib. Verificado con uv run pytest tests/ -q (64 passed) y uv run python src/models/vqc.py.
+<!-- SECTION:FINAL_SUMMARY:END -->

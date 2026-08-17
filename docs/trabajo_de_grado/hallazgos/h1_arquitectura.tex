@@ -4,7 +4,6 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-9: Clasificador cuántico variacional de 4 qubits (A2)
 % TASK-10: Modelo híbrido HQCNN con TorchLayer (A3)
 % TASK-11: Ablación de profundidad L y presupuesto de cómputo
 
@@ -152,3 +151,105 @@ congelado en \texttt{eval()} es responsabilidad del módulo contenedor híbrido 
 Los logits del VQC en $[-1,1]$ achatan el \textit{softmax} y limitan la confianza alcanzable;
 se retoma en TASK-10. La campaña factorial (60 celdas) requiere orquestador externo
 (TASK-13); este entregable no incluye \texttt{src/train.py}.
+
+\subsubsection{Task-9: Clasificador cuántico variacional de 4 qubits (A2)}
+\label{hallazgo:task-9}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A2 --- Diseño del clasificador cuántico variacional (m-1) \\\hline
+\textbf{Artefactos} & \texttt{src/models/vqc.py}, \texttt{src/models/\_\_init\_\_.py}, \texttt{tests/test\_vqc.py}, \texttt{Figuras/circuito\_vqc.png} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Diseñar el circuito variacional de 4 qubits que clasifica las cuatro clases de MRI
+mediante mediciones locales, con codificación por ángulos y ansatz de entrelazamiento
+fuerte. Cada decisión de arquitectura debe tener respaldo bibliográfico explícito: la
+codificación define el mapa de características cuántico~\cite{schuld2019feature}; con
+4 características y 4 qubits el circuito permanece superficial, requisito práctico en
+la era NISQ~\cite{Preskill2018}; el ansatz \textit{Strongly Entangling Layers} ofrece
+expresividad con $O(L \cdot n)$ parámetros~\cite{schuld2020circuit}.
+
+\paragraph{Procedimiento.}
+El QNode \texttt{circuito\_vqc} declara \texttt{interface="torch"} y
+\texttt{diff\_method="parameter-shift"} sobre \texttt{default.qubit}. La codificación
+usa \texttt{AngleEmbedding} con \texttt{rotation="Y"}; el ansatz es
+\texttt{StronglyEntanglingLayers} con profundidad $L$ tomada de
+\texttt{ExperimentConfig.n\_capas}. Las mediciones son locales:
+\texttt{qml.expval(qml.Z(i))} por qubit, en lugar de un observable global, porque los
+costos globales inducen mesetas áridas incluso a profundidad reducida, mientras que
+los observables locales preservan gradientes medibles~\cite{Cerezo2021bp}. El mapeo
+qubit$\rightarrow$clase se deriva de \texttt{CLASES\_ORDEN} en una constante única
+(\texttt{MAPEO\_QUBIT\_CLASE}). Los pesos se inicializan cerca de la identidad con
+escala $0{,}01$ para mitigar mesetas áridas de inicialización aleatoria
+~\cite{McClean2018B, grant2019initialization}. La forma de los pesos se obtiene
+de \texttt{StronglyEntanglingLayers.shape} vía \texttt{forma\_pesos\_vqc()}. El
+diagrama se genera con \texttt{qml.draw\_mpl}. Verificación:
+\begin{verbatim}
+uv run pytest tests/test_vqc.py -q
+uv run python src/models/vqc.py
+\end{verbatim}
+
+\paragraph{Resultados.}
+Mapeo qubit$\rightarrow$clase (idéntico al \texttt{Dataset}):
+
+\begin{center}
+\small
+\begin{tabular}{cl}\hline
+\textbf{Qubit} & \textbf{Clase} \\\hline
+0 & glioma \\
+1 & meningioma \\
+2 & pituitary \\
+3 & notumor \\\hline
+\end{tabular}
+\end{center}
+
+Norma media del gradiente en la inicialización (20 muestras, semilla 42), diagnóstico
+previo a la ablación de TASK-11:
+
+\begin{center}
+\small
+\begin{tabular}{cc}\hline
+\textbf{$L$} & \textbf{$\|\nabla \theta\|$ inicial} \\\hline
+2 & 1.237 \\
+4 & 1.730 \\
+6 & 2.107 \\\hline
+\end{tabular}
+\end{center}
+
+En este rango de profundidad la norma \textit{aumenta} con $L$, lo que indica que la
+inicialización cercana a la identidad mantiene gradientes medibles; la selección final
+de $L$ queda para TASK-11, donde expresividad y entrenabilidad se miden en el dataset
+real~\cite{holmes2022connecting}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Figuras/circuito_vqc}
+\caption{Circuito VQC de 4 qubits con \texttt{AngleEmbedding} ($Y$), ansatz
+\texttt{StronglyEntanglingLayers} ($L=4$) y mediciones locales $\langle Z_i \rangle$.}
+\label{fig:circuito-vqc}
+\end{figure}
+
+Pruebas automatizadas: \textbf{7 passed} en \texttt{test\_vqc.py}; regresión completa
+\textbf{64 passed}.
+
+\paragraph{Interpretación.}
+Un observable por qubit da un mapeo natural de 4 qubits a 4 clases sin costo global
+que induzca mesetas áridas~\cite{Cerezo2021bp}. Con \texttt{parameter-shift} y $L=6$
+hay $6 \times 4 \times 3 = 72$ parámetros, es decir 144 evaluaciones de circuito por
+muestra y por paso de optimización; esta aritmética justifica la compuerta de presupuesto
+de TASK-11. Las salidas $\langle Z_i \rangle \in [-1,1]$ por construcción; la capa densa
+de TASK-10 debe acotar las entradas antes del \textit{embedding} para evitar el
+\textit{wrapping} periódico de los ángulos.
+
+\paragraph{Decisiones.}
+\texttt{rotation="Y"} en \texttt{AngleEmbedding}; \texttt{default.qubit} con
+\texttt{parameter-shift} (no \texttt{lightning.qubit} como default). Escala de
+inicialización $0{,}01$. API vigente: \texttt{qml.Z(i)}, no \texttt{qml.PauliZ(i)}.
+No se cita \texttt{anzatz\_vqc\_2024} como respaldo del ansatz.
+
+\paragraph{Limitaciones.}
+Las entradas deben acotarse antes del \textit{embedding} (TASK-10 con \texttt{tanh}
+escalado). La selección de $L$ no se fija por intuición sino con la ablación de
+TASK-11. El diagnóstico de gradiente usa entradas aleatorias en $[0,\pi]$; el rango
+real dependerá de la capa densa acotada.
+
