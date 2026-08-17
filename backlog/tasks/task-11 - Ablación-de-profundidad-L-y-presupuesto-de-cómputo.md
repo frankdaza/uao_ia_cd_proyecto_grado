@@ -1,11 +1,11 @@
 ---
 id: TASK-11
 title: Ablación de profundidad L y presupuesto de cómputo
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:10'
-updated_date: '2026-08-17 01:10'
+updated_date: '2026-08-17 05:42'
 labels:
   - qml
   - bitacora
@@ -23,7 +23,7 @@ documentation:
   - .cursor/skills/ejecutar-experimento/SKILL.md
 priority: high
 type: spike
-ordinal: 11000
+ordinal: 1000
 ---
 
 ## Description
@@ -64,74 +64,32 @@ flowchart TB
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Existe una tabla comparativa para L en 2, 4 y 6 con F1 macro de validación, tiempo por época, norma media del gradiente y número de parámetros cuánticos
-- [ ] #2 El protocolo de la ablación es económico y está declarado por escrito (un fold, una fracción, presupuesto de épocas reducido) y no se presenta como un resultado de A8
-- [ ] #3 Se reportan las curvas de pérdida por profundidad, de modo que no se confunda una arquitectura peor con una que no convergió en el presupuesto reducido
-- [ ] #4 El criterio de selección de L se escribe antes de observar los resultados y se aplica tal cual
-- [ ] #5 L queda congelado en results/selected_hparams.json antes de iniciar task-13, con criterio, fecha y commit
-- [ ] #6 Se reporta el costo medido por corrida y la extrapolación a las 60 celdas del diseño factorial en horas de cómputo, indicando el dispositivo
-- [ ] #7 Existe una decisión explícita go/no-go sobre la viabilidad de la campaña y, si es no-go, las mitigaciones evaluadas y la adoptada quedan documentadas con su impacto metodológico
-- [ ] #8 La decisión D2 de entrenar el HQCNN también al 100 por ciento se confirma o se ajusta con base en el presupuesto medido
-- [ ] #9 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-11}, tabla comparativa y decisión
+- [x] #1 Existe una tabla comparativa para L en 2, 4 y 6 con F1 macro de validación, tiempo por época, norma media del gradiente y número de parámetros cuánticos
+- [x] #2 El protocolo de la ablación es económico y está declarado por escrito (un fold, una fracción, presupuesto de épocas reducido) y no se presenta como un resultado de A8
+- [x] #3 Se reportan las curvas de pérdida por profundidad, de modo que no se confunda una arquitectura peor con una que no convergió en el presupuesto reducido
+- [x] #4 El criterio de selección de L se escribe antes de observar los resultados y se aplica tal cual
+- [x] #5 L queda congelado en results/selected_hparams.json antes de iniciar task-13, con criterio, fecha y commit
+- [x] #6 Se reporta el costo medido por corrida y la extrapolación a las 60 celdas del diseño factorial en horas de cómputo, indicando el dispositivo
+- [x] #7 Existe una decisión explícita go/no-go sobre la viabilidad de la campaña y, si es no-go, las mitigaciones evaluadas y la adoptada quedan documentadas con su impacto metodológico
+- [x] #8 La decisión D2 de entrenar el HQCNN también al 100 por ciento se confirma o se ajusta con base en el presupuesto medido
+- [x] #9 Hallazgo registrado en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-11}, tabla comparativa y decisión
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 La ablación reutiliza el Trainer de task-8 sin escribir un bucle de entrenamiento nuevo
-- [ ] #2 Si se adopta el precálculo de características como mitigación, su incompatibilidad con el aumento de datos queda declarada y reflejada en el método
-- [ ] #3 El simulador cuántico usado es el mismo que usará la campaña, para que los tiempos sean extrapolables
-- [ ] #4 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #1 La ablación reutiliza el Trainer de task-8 sin escribir un bucle de entrenamiento nuevo
+- [x] #2 Si se adopta el precálculo de características como mitigación, su incompatibilidad con el aumento de datos queda declarada y reflejada en el método
+- [x] #3 El simulador cuántico usado es el mismo que usará la campaña, para que los tiempos sean extrapolables
+- [x] #4 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
 <!-- DOD:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Declarar el protocolo **antes** de correr, para que no se confunda con la campaña de A8: fold 0, fracción 0.25, presupuesto de épocas reducido (por ejemplo un tercio del de la campaña), semilla 42, mismo `Trainer` y mismo optimizador.
-2. Ejecutar las tres profundidades reutilizando la infraestructura, sin escribir un bucle nuevo:
-
-```python
-FILAS: list[dict[str, float | int]] = []
-for n_capas in (2, 4, 6):
-    cfg = replace(cfg_base, n_capas=n_capas, epocas=EPOCAS_ABLACION, data_fraction=0.25)
-    set_seed(cfg.semilla)
-    modelo = build_model("hqcnn", cfg)
-    registro, historial = Trainer(modelo, cfg, get_device()).ajustar(
-        cargador_train, cargador_val
-    )
-    FILAS.append(
-        {
-            "n_capas": n_capas,
-            "f1_val_macro": registro.f1_val_macro,
-            "accuracy_val": registro.accuracy_val,
-            "segundos_por_epoca": registro.train_time_s / cfg.epocas,
-            "n_params_cuanticos": n_capas * cfg.n_qubits * 3,
-            "norma_gradiente_inicial": norma_gradiente_inicial(n_capas),
-        }
-    )
-```
-
-3. Guardar también la curva de pérdida de cada `L`: sin ella no se puede distinguir "peor arquitectura" de "no convergió en el presupuesto reducido", que es el error de interpretación más probable aquí.
-4. Extrapolar el costo de la campaña con la medición real, no con una estimación teórica:
-
-```python
-def estimar_campana(segundos_por_epoca: float, epocas: int, n_celdas: int = 60) -> float:
-    """Estima las horas de cómputo de la campaña completa.
-
-    Notes
-    -----
-    Se parte del tiempo por época medido en la ablación y se escala por el
-    número de celdas del diseño factorial. Es una cota inferior: las corridas
-    al 100 % procesan más muestras por época que la fracción del 25 % usada
-    en la ablación.
-    """
-    return segundos_por_epoca * epocas * n_celdas / 3600
-```
-
-5. Escribir el criterio de selección **antes** de ver los resultados (por ejemplo: mayor F1 macro; ante diferencias dentro del ruido, la `L` más pequeña por costo y entrenabilidad) y aplicarlo tal cual.
-6. Congelar la decisión en `results/selected_hparams.json` con `L`, el criterio, la fecha y el commit.
-7. Tomar la decisión *go/no-go*. Si es *no-go*, evaluar y documentar las mitigaciones: precalcular las características del backbone congelado, reducir el presupuesto de épocas, reducir `k`, o restringir el diseño factorial. Registrar cuál se adopta y su impacto en el análisis estadístico.
-8. Confirmar o ajustar D2 (HQCNN también al 100 %) con base en el presupuesto medido.
-9. Registrar el hallazgo en `hallazgos/h1_arquitectura.tex`: tabla comparativa, curvas de pérdida, presupuesto estimado y decisión con su justificación.
+1. Constantes de protocolo pre-declaradas: fold=0, fraccion=0.25, epocas=5, semilla=42, simulador default.qubit, umbral go/no-go 72 h.
+2. Implementar src/experiments/ablacion_L.py con HQCNN(cfg) directo (sin build_model), Trainer(..., fold=0), estimacion ponderada por fraccion y criterio de seleccion fijado antes de correr.
+3. Ejecutar L in {2,4,6}; persistir results/ablacion_L.csv, historiales JSON, figura de curvas y results/selected_hparams.json.
+4. Documentar hallazgo en hallazgos/h1_arquitectura.tex con label hallazgo:task-11.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -148,4 +106,14 @@ def estimar_campana(segundos_por_epoca: float, epocas: int, n_celdas: int = 60) 
 - El tiempo en Colab no es estable entre sesiones (GPU asignada, contención). Registrar el dispositivo con cada medición y, si es posible, medir en el mismo entorno donde correrá la campaña.
 
 **Regla de cierre.** `L` queda congelado antes de iniciar task-13. Cambiar `L` a mitad de la campaña invalidaría las celdas ya ejecutadas, no solo la afectada.
+
+Plan corregido: HQCNN directo, fold=0, estimacion ponderada por fraccion, umbral 72 h, salida en ablacion_L.csv (no experiments.csv).
+
+Validacion: ablacion ejecutada en cpu (~92 min); artefactos en results/ablacion_L.csv, selected_hparams.json, figures/ablacion_L_curvas_perdida.png; L=6 congelada; no-go 387h>72h; pytest tests/test_ablacion_L.py 11 passed; hallazgo en h1_arquitectura.tex.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implementado src/experiments/ablacion_L.py reutilizando Trainer. Ablacion L={2,4,6} en fold 0, 25%, 5 epocas: L=6 seleccionada (F1 macro 0.817). Compuerta no-go (387 h extrapoladas vs 72 h); mitigacion reducir_epocas_campana; D2 ajustada. Verificado con corrida real, 11 tests y hallazgo hallazgo:task-11 en bitacora.
+<!-- SECTION:FINAL_SUMMARY:END -->

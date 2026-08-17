@@ -4,7 +4,7 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-11: Ablación de profundidad L y presupuesto de cómputo
+% (ninguna)
 
 \subsubsection{Task-7: Extractor congelado y fábrica de backbones (A1)}
 \label{hallazgo:task-7}
@@ -340,3 +340,83 @@ La iteración por muestra escala linealmente con el tamaño de lote y con
 EfficientNet-B0 en esta entrega; ResNet-50 queda para líneas base (TASK-12). La
 verificación numérica del gradiente usa el peso de mayor magnitud porque el primero
 puede tener gradiente casi nulo en la inicialización.
+
+\subsubsection{Task-11: Ablación de profundidad $L$ y presupuesto de cómputo (A2)}
+\label{hallazgo:task-11}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A2 --- Selección de profundidad del ansatz y compuerta de viabilidad (m-1) \\\hline
+\textbf{Artefactos} & \texttt{src/experiments/ablacion\_L.py}, \texttt{results/ablacion\_L.csv}, \texttt{results/selected\_hparams.json}, \texttt{results/figures/ablacion\_L\_curvas\_perdida.png} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Elegir $L \in \{2, 4, 6\}$ con un protocolo económico y, en la misma corrida, medir
+el costo real de la campaña factorial de TASK-13. Congelar $L$ en
+\texttt{selected\_hparams.json} y registrar una decisión \textit{go/no-go} sobre la
+viabilidad del diseño~\cite{holmes2022connecting,McClean2018B,caro2022generalization}.
+
+\paragraph{Protocolo (decisión de diseño, no A8).}
+Un solo fold (0), fracción del 25\,\%, presupuesto de 5 épocas (un tercio de las 15
+de campaña), semilla 42, \texttt{Trainer} de TASK-8 sin bucle ad hoc, simulador
+\texttt{default.qubit} con \texttt{parameter-shift}. \textbf{No} se reporta como
+resultado con significancia estadística: es una decisión instrumentada antes de la
+campaña factorial.
+
+\paragraph{Criterio de selección (pre-declarado).}
+Mayor F1 macro de validación al final del presupuesto reducido; ante diferencias
+$\leq 0{,}02$, preferir la $L$ más baja por costo y entrenabilidad.
+
+\paragraph{Procedimiento.}
+\begin{verbatim}
+uv run python -m src.experiments.ablacion_L
+uv run pytest tests/test_ablacion_L.py -q
+\end{verbatim}
+\texttt{TorchLayer} con \texttt{parameter-shift} no es estable en \texttt{mps}; la
+ablación se ejecutó en \texttt{cpu} para tiempos extrapolables con el simulador
+\texttt{default.qubit}.
+
+\paragraph{Resultados.}
+Tabla comparativa (fold 0, 25\,\%, 5 épocas, $n_{\mathrm{train}}=1345$):
+
+\begin{center}
+\small
+\begin{tabular}{ccccc}\hline
+\textbf{$L$} & \textbf{F1 macro} & \textbf{Acc. val} & \textbf{s/época} & \textbf{$\|\nabla\theta\|$ init.} \\\hline
+2 & 0.594 & 0.672 & 317 & 1.237 \\
+4 & 0.659 & 0.734 & 522 & 1.730 \\
+6 & 0.817 & 0.810 & 837 & 2.107 \\\hline
+\end{tabular}
+\end{center}
+
+Parámetros cuánticos: $L \times 4 \times 3$ (24, 48, 72). La norma de gradiente
+inicial \textit{aumenta} con $L$ en este rango; no hay evidencia de meseta árida en
+la inicialización cercana a la identidad.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../../results/figures/ablacion_L_curvas_perdida}
+\caption{Curvas de pérdida train/val por profundidad en el presupuesto reducido de
+TASK-11. Permiten distinguir arquitectura peor de no convergencia en 5 épocas.}
+\label{fig:ablacion-L-curvas}
+\end{figure}
+
+\paragraph{Presupuesto extrapolado.}
+Con $L=6$ seleccionada (837 s/época medidos al 25\,\%), la extrapolación ponderada
+por fracción a las 60 celdas del diseño factorial ($3 \times 4 \times 5$) arroja
+\textbf{387 h} en \texttt{cpu}, frente a un umbral de viabilidad de 72 h.
+
+\paragraph{Decisiones.}
+\begin{itemize}
+  \item \textbf{$L$ congelada:} 6 (\texttt{results/selected\_hparams.json}).
+  \item \textbf{Compuerta:} \textit{no-go} (387 h $>$ 72 h). Mitigación adoptada:
+        reducir épocas de campaña; D2 (HQCNN también al 100\,\%) queda \textit{ajustada}
+        y sujeta a revisión antes de TASK-13.
+  \item Mitigaciones evaluadas y descartadas sin adopción silenciosa: precálculo de
+        características (incompatible con augmentation, TASK-5), reducir $k$, restringir
+        el diseño factorial (rompe ANOVA de TASK-15).
+\end{itemize}
+
+\paragraph{Limitaciones.}
+Un fold y 5 épocas no permiten inferencia estadística. La extrapolación usa tiempos
+del HQCNN como cota conservadora (baselines clásicas son más rápidas). Los tiempos en
+\texttt{cpu} no son directamente comparables con una campaña en \texttt{cuda} (Colab).
