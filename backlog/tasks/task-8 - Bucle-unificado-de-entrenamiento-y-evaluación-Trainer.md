@@ -1,11 +1,11 @@
 ---
 id: TASK-8
 title: Bucle unificado de entrenamiento y evaluación (Trainer)
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:06'
-updated_date: '2026-08-17 01:06'
+updated_date: '2026-08-17 02:36'
 labels:
   - infra
   - bitacora
@@ -23,7 +23,7 @@ documentation:
   - AGENTS.md
 priority: high
 type: feature
-ordinal: 8000
+ordinal: 1000
 ---
 
 ## Description
@@ -64,104 +64,35 @@ flowchart TB
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 El mismo Trainer entrena el modelo clásico y el híbrido sin ninguna rama condicional por tipo de modelo
-- [ ] #2 El presupuesto de épocas, el optimizador, la función de pérdida y la tasa de aprendizaje son idénticos para todos los modelos y provienen de la configuración
-- [ ] #3 No se selecciona la época a reportar mirando el fold de validación que luego se reporta: el criterio elegido está documentado y se aplica igual a todos los modelos
-- [ ] #4 El Trainer no importa pennylane ni torchvision: depende solo de nn.Module y ExperimentConfig (DIP)
-- [ ] #5 Los índices de entrenamiento y validación se leen de results/splits.json y no se remuestrean
-- [ ] #6 Los tiempos de entrenamiento e inferencia se miden con calentamiento y sincronización de dispositivo según el protocolo de task-4
-- [ ] #7 Emite exactamente el contrato de task-4 (RunRecord y EpochRecord) sin campos ad hoc
-- [ ] #8 Los pesos se persisten con state_dict() exclusivamente y la recarga reproduce las métricas reportadas
-- [ ] #9 Las corridas son reanudables: una celda del diseño factorial ya presente en el CSV se omite en lugar de duplicarse
-- [ ] #10 Hallazgo breve en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-8} que documenta el criterio de épocas y los hiperparámetros comunes
+- [x] #1 El mismo Trainer entrena el modelo clásico y el híbrido sin ninguna rama condicional por tipo de modelo
+- [x] #2 El presupuesto de épocas, el optimizador, la función de pérdida y la tasa de aprendizaje son idénticos para todos los modelos y provienen de la configuración
+- [x] #3 No se selecciona la época a reportar mirando el fold de validación que luego se reporta: el criterio elegido está documentado y se aplica igual a todos los modelos
+- [x] #4 El Trainer no importa pennylane ni torchvision: depende solo de nn.Module y ExperimentConfig (DIP)
+- [x] #5 Los índices de entrenamiento y validación se leen de results/splits.json y no se remuestrean
+- [x] #6 Los tiempos de entrenamiento e inferencia se miden con calentamiento y sincronización de dispositivo según el protocolo de task-4
+- [x] #7 Emite exactamente el contrato de task-4 (RunRecord y EpochRecord) sin campos ad hoc
+- [x] #8 Los pesos se persisten con state_dict() exclusivamente y la recarga reproduce las métricas reportadas
+- [x] #9 Las corridas son reanudables: una celda del diseño factorial ya presente en el CSV se omite en lugar de duplicarse
+- [x] #10 Hallazgo breve en hallazgos/h1_arquitectura.tex con \label{hallazgo:task-8} que documenta el criterio de épocas y los hiperparámetros comunes
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #2 Prueba de sustituibilidad: un modelo clásico y uno con capa cuántica entrenan con el mismo Trainer
-- [ ] #3 Sin torch.save del módulo completo en ninguna ruta del código
-- [ ] #4 Presupuesto de épocas y optimizador congelados y documentados antes de iniciar cualquier campaña
+- [x] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #2 Prueba de sustituibilidad: un modelo clásico y uno con capa cuántica entrenan con el mismo Trainer
+- [x] #3 Sin torch.save del módulo completo en ninguna ruta del código
+- [x] #4 Presupuesto de épocas y optimizador congelados y documentados antes de iniciar cualquier campaña
 <!-- DOD:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Definir la clase con dependencias abstractas, sin conocer la naturaleza cuántica o clásica del modelo:
-
-```python
-class Trainer:
-    """Bucle único de entrenamiento y evaluación para modelos clásicos e híbridos.
-
-    Parameters
-    ----------
-    modelo : nn.Module
-        Modelo ya construido por la fábrica.
-    cfg : ExperimentConfig
-        Configuración del experimento.
-    dispositivo : torch.device
-        Dispositivo de cómputo seleccionado.
-
-    Notes
-    -----
-    No importa ``pennylane`` ni ``torchvision``: recibe un ``nn.Module`` y una
-    configuración, de modo que añadir un modelo nuevo no exige modificar esta
-    clase (OCP) y el modelo híbrido es sustituible por uno clásico (LSP).
-    """
-
-    def __init__(
-        self,
-        modelo: nn.Module,
-        cfg: ExperimentConfig,
-        dispositivo: torch.device,
-    ) -> None:
-        self._modelo = modelo.to(dispositivo)
-        self._cfg = cfg
-        self._dispositivo = dispositivo
-        self._criterio = nn.CrossEntropyLoss()
-        self._optimizador = torch.optim.Adam(
-            (p for p in modelo.parameters() if p.requires_grad),
-            lr=cfg.lr,
-        )
-```
-
-2. Implementar el bucle de épocas con presupuesto **fijo** y emisión del historial por época:
-
-```python
-    def ajustar(
-        self,
-        cargador_train: DataLoader,
-        cargador_val: DataLoader,
-    ) -> tuple[RunRecord, list[EpochRecord]]:
-        """Entrena por un presupuesto fijo de épocas y evalúa al final.
-
-        Returns
-        -------
-        tuple[RunRecord, list[EpochRecord]]
-            El registro de la corrida y su historial por época.
-
-        Notes
-        -----
-        No se selecciona la mejor época mirando el conjunto de validación que
-        luego se reporta: eso produciría una estimación optimista. Se usa el
-        presupuesto completo de épocas, idéntico para todos los modelos.
-        """
-        historial: list[EpochRecord] = []
-        inicio = time.perf_counter()
-        for epoca in range(self._cfg.epocas):
-            metricas_train = self._epoca_entrenamiento(cargador_train)
-            metricas_val = self._evaluar(cargador_val)
-            historial.append(EpochRecord(epoca=epoca, **metricas_train, **metricas_val))
-        self._sincronizar()
-        tiempo = time.perf_counter() - inicio
-        return self._construir_registro(historial, tiempo, cargador_val), historial
-```
-
-3. Implementar la medición de tiempos según el protocolo de task-4: descartar los primeros lotes como calentamiento, sincronizar el dispositivo antes de detener el reloj y reportar la mediana por lote para la inferencia.
-4. Implementar la reanudabilidad: antes de entrenar, consultar `results/experiments.csv` y omitir la celda `(modelo, fracción, fold)` si ya existe. La campaña de task-13 tiene 60 celdas y Colab corta sesiones.
-5. Persistir los pesos con `state_dict()` exclusivamente, con un nombre de archivo que codifique la celda del diseño factorial.
-6. Escribir la prueba de sustituibilidad: el mismo `Trainer` entrena un modelo clásico trivial y un modelo con capa cuántica simulada, sin ninguna rama condicional por tipo de modelo.
-7. Documentar en la bitácora (`h1_arquitectura.tex`) el criterio de selección de época elegido y por qué evita la fuga, junto con el presupuesto de épocas y el optimizador comunes.
+1. Crear src/train/dataloading.py con construir_loaders_para_fold(): lee splits.json vía obtener_indices(), drop_last=True en train, sin remuestreo.
+2. Crear src/train/trainer.py: Trainer(modelo, cfg, dispositivo, fold); Adam+CrossEntropyLoss solo sobre requires_grad; bucle fijo cfg.epocas; emite RunRecord/EpochRecord; reutiliza sincronizar_dispositivo y medir_inferencia_ms_por_lote; n_capas_vqc vía getattr(modelo, n_capas_vqc, None).
+3. Reanudabilidad: corrida_completada() delega a corrida_existe con tupla (modelo, data_fraction, fold, semilla); pesos en models/{modelo}_{frac}_f{fold}_s{semilla}.pt con state_dict exclusivamente.
+4. Crear tests/test_trainer.py: sustituibilidad clásico/cuántico simulado, reload state_dict, imports DIP, corrida_existe 4-tupla.
+5. Documentar hallazgo en h1_arquitectura.tex: presupuesto fijo 15 épocas, Adam lr=1e-3, criterio última época.
+6. Verificar con uv run pytest tests/test_trainer.py -q y regresión completa.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -179,4 +110,14 @@ class Trainer:
 - Si se paraleliza la campaña, dos procesos escribiendo el mismo CSV lo corrompen: escribir un archivo por corrida y consolidar en task-14.
 
 **Decisión a congelar aquí.** Presupuesto de épocas, optimizador, tasa de aprendizaje y criterio de época reportada. Cualquier cambio posterior invalida las comparaciones ya ejecutadas y obliga a repetir la campaña completa, no solo la celda afectada.
+
+Plan revisado: clave reanudabilidad 4-tupla, helper dataloading separado del Trainer (SRP), duck typing n_capas_vqc, convención de pesos con semilla, drop_last en train loader.
+
+Validación: uv run pytest tests/test_trainer.py -q (8 passed); uv run pytest tests/ -q (57 passed). Hallazgo en h1_arquitectura.tex con label hallazgo:task-8.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implementado Trainer unificado (src/train/trainer.py) con helper dataloading, reanudabilidad 4-tupla, state_dict, presupuesto fijo de 15 épocas y hiperparámetros congelados. Verificado con pytest: 8 tests en test_trainer.py, 57 en suite completa.
+<!-- SECTION:FINAL_SUMMARY:END -->

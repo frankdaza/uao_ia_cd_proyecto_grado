@@ -20,6 +20,7 @@ def construir_loader(
     mezclar: bool,
     semilla: int,
     num_workers: int = 2,
+    drop_last: bool = False,
 ) -> DataLoader:
     """Construye un DataLoader reproducible incluso con varios workers.
 
@@ -35,6 +36,9 @@ def construir_loader(
         Semilla base de la corrida.
     num_workers : int
         Número de procesos de carga en paralelo.
+    drop_last : bool
+        Si es ``True``, descarta el último lote incompleto (recomendado en
+        entrenamiento con lotes pequeños; TASK-6 / TASK-8).
 
     Returns
     -------
@@ -50,6 +54,7 @@ def construir_loader(
         worker_init_fn=make_worker_init_fn(semilla),
         generator=generador,
         pin_memory=torch.cuda.is_available(),
+        drop_last=drop_last,
     )
 
 

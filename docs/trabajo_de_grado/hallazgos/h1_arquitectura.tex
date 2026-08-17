@@ -4,7 +4,6 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-8: Bucle unificado de entrenamiento y evaluación (Trainer)
 % TASK-9: Clasificador cuántico variacional de 4 qubits (A2)
 % TASK-10: Modelo híbrido HQCNN con TorchLayer (A3)
 % TASK-11: Ablación de profundidad L y presupuesto de cómputo
@@ -78,3 +77,78 @@ ese modo cuando el \texttt{Trainer} llama \texttt{model.train()} es responsabili
 módulo contenedor híbrido (TASK-10). La normalización de entrada debe ser la de ImageNet
 (TASK-5); un backbone congelado con estadísticas distintas desplaza las características
 transferidas.
+
+\subsubsection{Task-8: Bucle unificado de entrenamiento y evaluación (Trainer)}
+\label{hallazgo:task-8}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & Bucle único de entrenamiento y evaluación para líneas base, ablación y campaña (m-1) \\\hline
+\textbf{Artefactos} & \texttt{src/train/trainer.py}, \texttt{src/train/dataloading.py}, \texttt{src/train/\_\_init\_\_.py}, \texttt{tests/test\_trainer.py} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Implementar un único bucle de entrenamiento y evaluación que reciba un \texttt{nn.Module}
+ya construido y un \texttt{ExperimentConfig}, de modo que HQCNN y líneas base clásicas
+compitan bajo el mismo protocolo experimental~\cite{esteva2019guide,litjens2017survey}.
+Evitar bucles distintos por familia de modelo: basta una diferencia en optimizador o en
+medición de tiempos para invalidar la comparación arquitectónica.
+
+\paragraph{Procedimiento.}
+La clase \texttt{Trainer} depende solo de \texttt{nn.Module} y \texttt{ExperimentConfig}
+(DIP): no importa \texttt{pennylane} ni \texttt{torchvision}. El helper
+\texttt{construir\_loaders\_para\_fold()} lee índices de \texttt{results/splits.json} vía
+\texttt{obtener\_indices()} sin remuestreo; el cargador de entrenamiento usa
+\texttt{drop\_last=True}. Hiperparámetros congelados en \texttt{ExperimentConfig}:
+15 épocas, Adam con \texttt{lr=1e-3}, \texttt{CrossEntropyLoss} sobre \textit{logits}
+(no probabilidades). Criterio de época reportada: \textbf{presupuesto fijo completo}
+(última época), sin seleccionar la mejor época mirando el fold de validación que luego
+se reporta (evita fuga por selección de época). Emite \texttt{RunRecord} y
+\texttt{EpochRecord}; reanudabilidad por tupla \texttt{(modelo, data\_fraction, fold, semilla)};
+pesos en \texttt{models/\{modelo\}\_\{frac\}\_f\{fold\}\_s\{semilla\}.pt} con
+\texttt{state\_dict()} exclusivamente. Tiempos de inferencia con calentamiento y
+sincronización de dispositivo (TASK-4). Verificación:
+\begin{verbatim}
+uv run pytest tests/test_trainer.py -q
+uv run pytest tests/ -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Hiperparámetros comunes congelados antes de cualquier campaña:
+
+\begin{center}
+\small
+\begin{tabular}{ll}\hline
+\textbf{Parámetro} & \textbf{Valor congelado} \\\hline
+Épocas & 15 \\
+Optimizador & Adam \\
+Tasa de aprendizaje & $10^{-3}$ \\
+Función de pérdida & CrossEntropyLoss (sobre logits) \\
+Criterio de época reportada & Última época del presupuesto fijo \\
+Clave de reanudabilidad & \texttt{(modelo, data\_fraction, fold, semilla)} \\\hline
+\end{tabular}
+\end{center}
+
+Pruebas automatizadas: \textbf{8 passed} en \texttt{test\_trainer.py}; regresión completa
+\textbf{57 passed}. Sustituibilidad verificada: el mismo \texttt{Trainer} entrena un modelo
+clásico trivial y uno con capa cuántica simulada (logits en $[-1,1]$) sin ramas
+condicionales por tipo de modelo.
+
+\paragraph{Interpretación.}
+Un solo bucle convierte la comparación HQCNN vs.\ línea base en una sustitución de modelo
+(LSP): la diferencia observada es atribuible a la arquitectura, no a protocolos distintos.
+El criterio de época fija elimina el sesgo optimista de elegir la mejor validación sobre el
+mismo fold reportado. \texttt{n\_capas\_vqc} se obtiene por \textit{duck typing}
+(\texttt{getattr(modelo, "n\_capas\_vqc", None)}), sin ramas \texttt{if modelo == "hqcnn"}.
+
+\paragraph{Decisiones.}
+Separar \texttt{construir\_loaders\_para\_fold()} del \texttt{Trainer} preserva SRP: el
+bucle entrena y evalúa; no arma particiones. Los \textit{sinks} (CSV, wandb, JSON) quedan
+fuera del \texttt{Trainer}: este emite registros y el orquestador (TASK-13) persiste.
+Solo parámetros con \texttt{requires\_grad=True} entran a Adam.
+
+\paragraph{Limitaciones.}
+El \texttt{Trainer} llama \texttt{model.train()} en cada época; mantener el backbone
+congelado en \texttt{eval()} es responsabilidad del módulo contenedor híbrido (TASK-10).
+Los logits del VQC en $[-1,1]$ achatan el \textit{softmax} y limitan la confianza alcanzable;
+se retoma en TASK-10. La campaña factorial (60 celdas) requiere orquestador externo
+(TASK-13); este entregable no incluye \texttt{src/train.py}.
