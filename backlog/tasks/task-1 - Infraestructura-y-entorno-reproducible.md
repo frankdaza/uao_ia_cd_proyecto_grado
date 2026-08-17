@@ -1,11 +1,11 @@
 ---
 id: TASK-1
 title: Infraestructura y entorno reproducible
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:40'
-updated_date: '2026-08-17 00:40'
+updated_date: '2026-08-17 01:29'
 labels:
   - infra
 milestone: m-0
@@ -51,20 +51,20 @@ flowchart LR
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 uv sync --frozen reproduce el entorno desde uv.lock sin conflictos de versiones y el README documenta los pins equivalentes para Colab
-- [ ] #2 ExperimentConfig es la única fuente de hiperparámetros: ningún módulo de src/ define valores por defecto duplicados
-- [ ] #3 set_seed está implementado una sola vez y fija random, numpy, torch y torch.cuda; dos ejecuciones con la misma semilla y el mismo dispositivo producen métricas idénticas
-- [ ] #4 La selección de dispositivo respeta el orden cuda > mps > cpu y el dispositivo elegido queda registrado en el log de la corrida
-- [ ] #5 No existe ninguna ruta absoluta local ni de Google Drive en src/: todas las rutas se derivan de ExperimentConfig con pathlib
-- [ ] #6 Las carpetas src/, models/, results/ y results/figures/ existen y su propósito está descrito en el README
+- [x] #1 uv sync --frozen reproduce el entorno desde uv.lock sin conflictos de versiones y el README documenta los pins equivalentes para Colab
+- [x] #2 ExperimentConfig es la única fuente de hiperparámetros: ningún módulo de src/ define valores por defecto duplicados
+- [x] #3 set_seed está implementado una sola vez y fija random, numpy, torch y torch.cuda; dos ejecuciones con la misma semilla y el mismo dispositivo producen métricas idénticas
+- [x] #4 La selección de dispositivo respeta el orden cuda > mps > cpu y el dispositivo elegido queda registrado en el log de la corrida
+- [x] #5 No existe ninguna ruta absoluta local ni de Google Drive en src/: todas las rutas se derivan de ExperimentConfig con pathlib
+- [x] #6 Las carpetas src/, models/, results/ y results/figures/ existen y su propósito está descrito en el README
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 (list[int], X | None) en toda función pública
-- [ ] #2 Docstrings NumPy en español latinoamericano
-- [ ] #3 Ejecución verificada con uv run; sin pip fuera de la excepción documentada de Colab
-- [ ] #4 Sin secretos ni rutas absolutas en el código versionado
+- [x] #1 Tipado de Python 3.12 (list[int], X | None) en toda función pública
+- [x] #2 Docstrings NumPy en español latinoamericano
+- [x] #3 Ejecución verificada con uv run; sin pip fuera de la excepción documentada de Colab
+- [x] #4 Sin secretos ni rutas absolutas en el código versionado
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -143,6 +143,8 @@ def get_device() -> torch.device:
 5. Documentar en el README el bloque de `pip install` equivalente para Colab, con **las mismas versiones** de `pyproject.toml` (única excepción permitida a UV).
 6. Verificar reproducibilidad: ejecutar dos veces un script mínimo con la misma semilla (`uv run python -m src.smoke`) y comparar la pérdida de la primera época bit a bit.
 7. Registrar en la bitácora (cuando exista, task-2) un párrafo breve con la versión del stack y el dispositivo detectado.
+
+8. Incluir raiz_figuras en ExperimentConfig y src/smoke.py como entregable explícito.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -158,4 +160,14 @@ def get_device() -> torch.device:
 - No usar `pip`, `conda` ni `python -m venv` en local. Único gestor: UV.
 
 **Decisión a documentar.** Semilla global 42 fijada por convención del anteproyecto; queda como parámetro de `ExperimentConfig` para poder auditar la sensibilidad a la semilla si el análisis estadístico lo exige.
+
+Mejoras aplicadas al plan: raiz_figuras en config, smoke.py en entregables, set_seed(semilla) sin default duplicado, make_worker_init_fn para task-5. Bitácora (plan paso 7) se pospone a task-2.
+
+Validación: uv sync --frozen OK; uv run python -m src.smoke PASS (mps, pérdida=1.54205954 bit a bit); ruff check src/ sin errores. Ajuste: pennylane-lightning==0.45.0 (0.45.1 no publicado en PyPI).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Base reproducible: ExperimentConfig, set_seed, get_device/log_dispositivo, layout models/results/figures, uv.lock, README Colab pins y src/smoke.py. Verificado con uv sync --frozen, smoke PASS en mps y ruff check src/.
+<!-- SECTION:FINAL_SUMMARY:END -->

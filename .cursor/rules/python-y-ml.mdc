@@ -25,19 +25,22 @@ import numpy as np
 import torch
 
 
-def set_seed(seed: int = 42) -> None:
-    """Fija semillas para reproducibilidad en CPU, CUDA y MPS."""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+def set_seed(semilla: int) -> None:
+    """Fija semillas para reproducibilidad en CPU, CUDA y MPS.
+
+    Parameters
+    ----------
+    semilla : int
+        Valor tomado de ``ExperimentConfig.semilla``; no usar default aquí.
+    """
+    random.seed(semilla)
+    np.random.seed(semilla)
+    torch.manual_seed(semilla)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+        torch.cuda.manual_seed_all(semilla)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    try:
-        torch.use_deterministic_algorithms(True)
-    except RuntimeError:
-        pass  # Algunas ops no tienen implementación determinista
+    torch.use_deterministic_algorithms(True, warn_only=True)
 ```
 
 ## 2. Tipado y Documentación

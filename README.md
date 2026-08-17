@@ -91,12 +91,46 @@ flowchart LR
 | Python | 3.12 | Intérprete (gestor UV) |
 | PyTorch | 2.9.1 | Entrenamiento híbrido *end-to-end* |
 | torchvision | 0.24.1 | EfficientNet-B0, ResNet-50 |
-| PennyLane + Lightning | 0.45.1 | VQC, `TorchLayer`, simulación |
+| PennyLane + Lightning | 0.45.1 / 0.45.0 | VQC, `TorchLayer`, simulación |
 | scikit-learn | 1.9.0 | k-fold estratificado, métricas |
 | statsmodels | 0.14.6 | ANOVA, Tukey HSD |
 | wandb | 0.28.x | Monitoreo de experimentos |
 
 **Entorno de ejecución:** Google Colab (CUDA) o local con UV (`uv sync`, `uv run python …`). Simulador cuántico por defecto: `default.qubit` con `interface="torch"` y `diff_method="parameter-shift"`.
+
+## Estructura del repositorio
+
+| Carpeta | Propósito |
+| :--- | :--- |
+| `src/` | Código importable: configuración, datos, modelos, entrenamiento y logging |
+| `data/` | Conjunto de datos MRI (no versionado; ubicación declarada en `ExperimentConfig`) |
+| `models/` | Pesos guardados (`state_dict`) por corrida |
+| `results/` | Métricas tabulares, historiales por época y particiones (`splits.json`) |
+| `results/figures/` | Figuras, matrices de confusión y fragmentos LaTeX generados |
+| `docs/proyecto_de_grado/` | Anteproyecto, referencias BibTeX y documentación de la tesis |
+
+## Entorno local (UV)
+
+```bash
+uv sync
+uv run python -m src.smoke
+```
+
+El comando `src.smoke` verifica reproducibilidad bit a bit con la semilla de `ExperimentConfig` y registra el dispositivo detectado (`cuda`, `mps` o `cpu`).
+
+## Google Colab
+
+Única excepción al gestor UV: en Colab instalar con `pip` las mismas versiones del [`pyproject.toml`](pyproject.toml):
+
+```python
+!pip install pennylane==0.45.1 pennylane-lightning==0.45.0 --quiet
+!pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 \
+    --index-url https://download.pytorch.org/whl/cu128 --quiet
+!pip install "numpy>=2.0,<2.3" scikit-learn==1.9.0 "scipy>=1.16,<1.17" \
+    statsmodels==0.14.6 "pandas>=2.3,<2.4" "matplotlib>=3.10,<3.11" \
+    "seaborn>=0.13,<0.14" "wandb>=0.28,<0.29" "tqdm>=4.67,<5" \
+    "pillow>=11,<12" --quiet
+```
 
 ## Equipo
 

@@ -43,3 +43,12 @@
 
 ## macOS:
 .DS_Store
+
+## Artefactos de experimentos (conservar estructura con .gitkeep):
+models/*
+!models/.gitkeep
+results/*
+!results/.gitkeep
+!results/figures/
+results/figures/*
+!results/figures/.gitkeep

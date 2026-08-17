@@ -1,11 +1,9 @@
-"""Paquete principal del proyecto de tesis HQCNN."""
+"""Utilidades transversales: semilla y dispositivo."""
 
-from src.config import ExperimentConfig
 from src.utils.device import get_device, log_dispositivo
 from src.utils.seed import make_worker_init_fn, set_seed
 
 __all__ = [
-    "ExperimentConfig",
     "get_device",
     "log_dispositivo",
     "make_worker_init_fn",

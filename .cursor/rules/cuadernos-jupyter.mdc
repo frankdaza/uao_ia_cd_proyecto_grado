@@ -13,7 +13,7 @@ alwaysApply: false
 - **Colab:** `pip install` con versiones pinneadas equivalentes al [`pyproject.toml`](pyproject.toml) del repositorio:
 
 ```python
-!pip install pennylane==0.45.1 pennylane-lightning==0.45.1 --quiet
+!pip install pennylane==0.45.1 pennylane-lightning==0.45.0 --quiet
 !pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 \
     --index-url https://download.pytorch.org/whl/cu128 --quiet
 !pip install numpy scikit-learn scipy statsmodels pandas matplotlib seaborn wandb tqdm --quiet

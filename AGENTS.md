@@ -42,7 +42,7 @@ No instalar versiones "latest" sin verificar compatibilidad con **PennyLane 0.45
 | Componente | Versión | Rol |
 | :--- | :--- | :--- |
 | Python | 3.12 | Intérprete fijado por UV |
-| PennyLane + Lightning | 0.45.1 | VQC, `TorchLayer`, simulación |
+| PennyLane + Lightning | 0.45.1 / 0.45.0 | VQC, `TorchLayer`, simulación |
 | PyTorch | 2.9.1 | Entrenamiento híbrido end-to-end |
 | torchvision | 0.24.1 | EfficientNet-B0, ResNet-50 |
 | NumPy | `>=2.0,<2.3` | Requisito de PennyLane |
