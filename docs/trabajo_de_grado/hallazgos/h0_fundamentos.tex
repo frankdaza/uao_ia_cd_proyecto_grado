@@ -86,8 +86,78 @@ Los documentos principales (\texttt{Bitacora Metodologica de Hallazgos.tex},
 \texttt{Trabajo de Grado - Frank Daza.tex}) llevan espacios en el nombre;
 la compilación requiere comillas en la línea de comandos.
 
+\subsubsection{Task-3: Auditoría del Brain Tumor MRI Dataset (A4)}
+\label{hallazgo:task-3}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A4 --- Curaduría y auditoría del dataset (m-0) \\\hline
+\textbf{Artefactos} & \texttt{src/data/audit.py}, \texttt{results/dataset\_manifest.csv}, \texttt{results/dataset\_audit.md}, \texttt{results/figures/distribucion\_clases.png} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Verificar el conteo real, el balance por clase y partición, la integridad de las
+imágenes y la presencia de duplicados exactos antes de diseñar escenarios de
+escasez, siguiendo buenas prácticas de preparación de datos en imagen médica~\cite{willemink2020preparing}.
+
+\paragraph{Procedimiento.}
+Dataset local en \texttt{notebooks/data/}, enlazado por symlink a
+\texttt{data/brain\_tumor\_mri/} (ruta de \texttt{ExperimentConfig}).
+Recorrido estable con \texttt{pathlib}, verificación PIL (\texttt{verify} +
+\texttt{load}), hash SHA-256 de contenido y clasificación de duplicados en tres
+categorías. Ejecución:
+\begin{verbatim}
+uv run python -m src.data.audit
+\end{verbatim}
+
+\paragraph{Resultados.}
+Total inventariado: \textbf{7023} imágenes (coincide con el anteproyecto).
+Extensiones: solo \texttt{.jpg}. Imágenes corruptas: \textbf{0}.
+Duplicados exactos (grupos con $n>1$): intra clase \textbf{194}, entre clases
+\textbf{0}, Training$\leftrightarrow$Testing \textbf{79}.
+Exclusiones: \textbf{297} filas (\texttt{duplicado\_exacto}: 194;
+\texttt{fuga\_train\_test}: 103). Utilizables: \textbf{6726}.
+
+\begin{center}
+\begin{tabular}{lrrrr}\hline
+\textbf{Clase} & \textbf{Testing} & \textbf{Training} & \textbf{Total} \\\hline
+glioma       & 300 & 1321 & 1621 \\
+meningioma   & 306 & 1339 & 1645 \\
+notumor      & 405 & 1595 & 2000 \\
+pituitary    & 300 & 1457 & 1757 \\\hline
+\textbf{Total} & 1311 & 5712 & 7023 \\\hline
+\end{tabular}
+\end{center}
+
+Heterogeneidad: modos \texttt{L} (3093), \texttt{RGB} (3926), \texttt{P}/\texttt{RGBA} (4);
+resolución dominante $512\times512$ (4742 imágenes). Las cuatro clases corresponden
+a categorías del sistema nervioso central en la clasificación WHO 2021~\cite{louis20212021}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{../../../results/figures/distribucion_clases}
+\caption{Distribución de clases por partición (imágenes no excluidas).}
+\label{fig:distribucion-clases-task3}
+\end{figure}
+
+\paragraph{Interpretación.}
+El dataset agregado de Nickparvar~\cite{nickparvar2023dataset} es heterogéneo en
+modo de color y resolución; la auditoría confirma que el tamaño declarado es correcto
+pero existen duplicados exactos y fuga potencial entre \texttt{Training/} y
+\texttt{Testing/}. Sin esta verificación, la exactitud de modelos posteriores
+podría inflarse por memorización de copias idénticas~\cite{haddou2025hqcm}.
+
+\paragraph{Decisiones.}
+Unir \texttt{Training/} y \texttt{Testing/} al conjunto completo para validación
+cruzada estratificada $k=5$ (decisión D1, TASK-6); no se usa \texttt{Testing/} como
+holdout externo. Las exclusiones quedan en \texttt{dataset\_manifest.csv} mediante
+columnas \texttt{excluida} y \texttt{motivo\_exclusion}.
+
+\paragraph{Limitaciones.}
+El hash SHA-256 detecta duplicados byte a byte, no re-codificaciones JPEG con distinta
+compresión. La conversión a 3 canales y el redimensionado a $224\times224$ quedan
+para TASK-5.
+
 % --- Tareas pendientes en este fragmento ---
-% TASK-3: Auditoría del Brain Tumor MRI Dataset (A4)
 % TASK-4: Contrato de métricas, logging y artefactos
 % TASK-5: Pipeline de preprocesamiento y aumento de datos (A5)
 % TASK-6: Protocolo de particiones: holdout, k-fold y fracciones (A7)

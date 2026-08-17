@@ -1,11 +1,11 @@
 ---
 id: TASK-3
 title: Auditoría del Brain Tumor MRI Dataset (A4)
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 00:48'
+updated_date: '2026-08-17 01:46'
 labels:
   - datos
   - bitacora
@@ -24,7 +24,7 @@ documentation:
   - AGENTS.md
 priority: high
 type: task
-ordinal: 3000
+ordinal: 1000
 ---
 
 ## Description
@@ -62,21 +62,22 @@ flowchart TB
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 results/dataset_manifest.csv tiene una fila por imagen con ruta relativa, clase, partición de origen, resolución, modo de color y hash SHA-256
-- [ ] #2 El conteo total y por clase se compara explícitamente con las 7023 imágenes declaradas en el anteproyecto y toda discrepancia queda documentada con su causa
-- [ ] #3 Se reporta el número de duplicados exactos por hash en tres categorías: intra clase, entre clases (etiqueta contradictoria) y entre Training y Testing (fuga potencial)
-- [ ] #4 Se listan las imágenes corruptas o truncadas y se justifica si se excluyen mediante una columna auditable en el manifiesto
-- [ ] #5 Se documenta la heterogeneidad real del dataset (resoluciones y modos de color) y su implicación para el preprocesamiento de task-5
-- [ ] #6 Queda tomada y justificada con evidencia la decisión sobre el rol de la carpeta Testing: holdout externo o unión al conjunto completo para la validación cruzada
-- [ ] #7 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-3}, tabla de conteos y figura de distribución de clases
+- [x] #1 #1 results/dataset_manifest.csv tiene una fila por imagen con ruta relativa, clase, partición de origen, resolución (ancho/alto), modo de color, hash SHA-256, excluida y motivo_exclusion
+- [x] #2 #2 El conteo total y por clase se compara explícitamente con las 7023 imágenes declaradas en el anteproyecto y toda discrepancia queda documentada con su causa
+- [x] #3 #3 Se reporta el número de duplicados exactos por hash en tres categorías: intra clase, entre clases (etiqueta contradictoria) y entre Training y Testing (fuga potencial)
+- [x] #4 #4 Se listan las imágenes corruptas o truncadas y se justifica si se excluyen mediante una columna auditable en el manifiesto
+- [x] #5 #5 Se documenta la heterogeneidad real del dataset (resoluciones y modos de color) y su implicación para el preprocesamiento de task-5
+- [x] #6 #6 Queda tomada y justificada con evidencia la decisión sobre el rol de la carpeta Testing: holdout externo o unión al conjunto completo para la validación cruzada
+- [x] #7 #7 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-3}, tabla de conteos y figura de distribución de clases
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Código en src/data/audit.py ejecutable con uv run python -m src.data.audit
-- [ ] #2 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #3 El manifiesto guarda rutas relativas: ningún artefacto en results/ contiene rutas absolutas
-- [ ] #4 La figura queda en results/figures/ y se referencia desde la bitácora
+- [x] #1 Código en src/data/audit.py ejecutable con uv run python -m src.data.audit
+- [x] #2 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #3 El manifiesto guarda rutas relativas: ningún artefacto en results/ contiene rutas absolutas
+- [x] #4 La figura queda en results/figures/ y se referencia desde la bitácora
+- [x] #5 Paquete src/data/ con __init__.py para ejecución como módulo
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -159,6 +160,8 @@ Ejecución:
 ```bash
 uv run python -m src.data.audit
 ```
+
+0. Enlazar notebooks/data/ → data/brain_tumor_mri/ (symlink macOS). Paso 2: descubrir_extensiones() antes del recorrido; no filtrar solo .jpg a ciegas.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -173,4 +176,14 @@ uv run python -m src.data.audit
 - No filtrar por extensión `.jpg` a ciegas: verificar primero con `rglob("*")` qué extensiones existen realmente, o el conteo saldrá corto y se atribuirá erróneamente a "el dataset trae menos imágenes".
 - El orden de `Path.rglob` **no** está garantizado entre sistemas de archivos. El `sorted()` no es cosmético: los índices posicionales de task-6 dependen de él.
 - No borrar archivos del dataset original. Las exclusiones se expresan como una columna `excluida` con su motivo en el manifiesto, para que la decisión sea auditable y reversible.
+
+Prerequisito local (Mac Studio): dataset en notebooks/data/ enlazado por symlink a data/brain_tumor_mri/. Sin duplicar imágenes.
+
+Auditoría ejecutada: 7023 imágenes (.jpg), 0 corruptas, 6726 utilizables, 297 excluidas (194 duplicado_exacto, 103 fuga_train_test). Duplicados: intra=194, entre_clases=0, train/test=79. Decisión: unir Training+Testing para k-fold D1. Symlink data/brain_tumor_mri -> notebooks/data.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implementado src/data/audit.py con manifiesto SHA-256, detección de duplicados y exclusiones auditables. Verificado con uv run python -m src.data.audit (7023 filas, sin rutas absolutas en results/). Hallazgo documentado en h0_fundamentos.tex; bitácora compila con figura distribucion_clases.png.
+<!-- SECTION:FINAL_SUMMARY:END -->
