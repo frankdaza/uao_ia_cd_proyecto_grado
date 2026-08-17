@@ -1,7 +1,6 @@
 """Siembra determinista para reproducibilidad de corridas."""
 
 import random
-from collections.abc import Callable
 
 import numpy as np
 import torch
@@ -25,7 +24,23 @@ def set_seed(semilla: int) -> None:
     torch.use_deterministic_algorithms(True, warn_only=True)
 
 
-def make_worker_init_fn(semilla: int) -> Callable[[int], None]:
+class WorkerInitFn:
+    """Inicializador determinista de workers para ``DataLoader``.
+
+    Se implementa como clase de módulo (no cierre local) para que sea
+    serializable con el backend ``spawn`` de macOS y Windows.
+    """
+
+    __slots__ = ("_semilla",)
+
+    def __init__(self, semilla: int) -> None:
+        self._semilla = semilla
+
+    def __call__(self, worker_id: int) -> None:
+        set_seed(self._semilla + worker_id)
+
+
+def make_worker_init_fn(semilla: int) -> WorkerInitFn:
     """Construye ``worker_init_fn`` determinista para ``DataLoader``.
 
     Parameters
@@ -35,10 +50,7 @@ def make_worker_init_fn(semilla: int) -> Callable[[int], None]:
 
     Returns
     -------
-    Callable[[int], None]
-        Función compatible con ``DataLoader(worker_init_fn=...)``.
+    WorkerInitFn
+        Objeto invocable compatible con ``DataLoader(worker_init_fn=...)``.
     """
-    def worker_init_fn(worker_id: int) -> None:
-        set_seed(semilla + worker_id)
-
-    return worker_init_fn
+    return WorkerInitFn(semilla)

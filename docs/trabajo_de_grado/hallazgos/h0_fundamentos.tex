@@ -154,11 +154,76 @@ columnas \texttt{excluida} y \texttt{motivo\_exclusion}.
 
 \paragraph{Limitaciones.}
 El hash SHA-256 detecta duplicados byte a byte, no re-codificaciones JPEG con distinta
-compresión. La conversión a 3 canales y el redimensionado a $224\times224$ quedan
-para TASK-5.
+compresión. La conversión a 3 canales y el redimensionado a $224\times224$ se
+documentan en TASK-5.
+
+\subsubsection{Task-5: Pipeline de preprocesamiento y aumento de datos (A5)}
+\label{hallazgo:task-5}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A5 --- Preprocesamiento y aumento de datos (m-0) \\\hline
+\textbf{Artefactos} & \texttt{src/data/transforms.py}, \texttt{src/data/dataset.py}, \texttt{src/data/loaders.py}, \texttt{tests/test\_transforms.py}, \texttt{tests/test\_dataset.py}, \texttt{results/figures/ejemplos\_aumento.png} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Definir el pipeline de entrada para los \textit{backbones} preentrenados en ImageNet:
+redimensionado a $224\times224$, normalización con las estadísticas de ImageNet y aumento
+de datos \textbf{únicamente en entrenamiento}, siguiendo buenas prácticas de preparación
+de datos en imagen médica~\cite{willemink2020preparing,litjens2017survey}.
+
+\paragraph{Procedimiento.}
+Transformaciones declaradas en \texttt{construir\_transformaciones()} (API
+\texttt{torchvision.transforms.v2}, sin mezclar con la API clásica):
+\begin{enumerate}
+  \item \texttt{Resize((224, 224))}
+  \item \textbf{Solo entrenamiento:} \texttt{RandomRotation($\pm 10^\circ$, fill=0)} y
+        \texttt{RandomHorizontalFlip(p=0.5)}
+  \item \texttt{ToImage()} $\rightarrow$ \texttt{ToDtype(float32, scale=True)}
+  \item \texttt{Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))}
+\end{enumerate}
+El \texttt{MRIDataset} lee del manifiesto auditado (TASK-3), convierte siempre a RGB
+(incluidas imágenes en modo \texttt{L}) y mapea la etiqueta con
+\texttt{MAPEO\_CLASE} alineado a TASK-4. Los \texttt{DataLoader} usan
+\texttt{generator} y \texttt{WorkerInitFn} (serializable en \texttt{spawn}) para
+reproducibilidad con \texttt{num\_workers > 0}. Verificación:
+\begin{verbatim}
+uv run pytest tests/test_transforms.py tests/test_dataset.py -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Toda imagen sale como tensor \texttt{float32} de forma $(3, 224, 224)$.
+Pruebas automatizadas: \textbf{10 passed} (determinismo en validación, variación en
+entrenamiento, contrato de forma, grises a 3 canales, loader determinista con 2 workers).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{../../../results/figures/ejemplos_aumento}
+\caption{Ejemplos de preprocesamiento: original, validación (sin aumento) y entrenamiento
+(con rotación leve y volteo horizontal).}
+\label{fig:ejemplos-aumento-task5}
+\end{figure}
+
+\paragraph{Interpretación.}
+Los \textit{backbones} EfficientNet-B0 y ResNet-50 esperan entradas calibradas con
+ImageNet~\cite{tan2019efficientnet}; normalizar con estadísticas del dataset propio
+degradaría las características transferidas de un modelo congelado. El aumento se
+aplica \textbf{después} de fijar las particiones (TASK-6): aumentar antes de partir
+filtraría variantes de la misma imagen entre entrenamiento y validación.
+
+\paragraph{Decisiones.}
+\textbf{Volteo horizontal} ($p=0.5$): defendible por la simetría aproximada del cerebro
+en cortes axiales. \textbf{Rotaciones leves} ($\pm 10^\circ$): variabilidad de
+posicionamiento del paciente sin distorsionar la anatomía. \textbf{Volteo vertical
+descartado}: produce anatomías imposibles en MRI axial. \texttt{fill=0} en rotación:
+coherente con el fondo negro típico de MRI. Validación y prueba \textbf{nunca} reciben
+aumento.
+
+\paragraph{Limitaciones.}
+El aumento no sustituye la auditoría de duplicados (TASK-3). La justificación anatómica
+no garantiza que toda variante sintética sea clínicamente plausible; un aumento agresivo
+introduciría sesgo en lugar de robustez~\cite{willemink2020preparing}.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-5: Pipeline de preprocesamiento y aumento de datos (A5)
 % TASK-6: Protocolo de particiones: holdout, k-fold y fracciones (A7)
 
 \subsubsection{Task-4: Contrato de métricas, logging y artefactos}

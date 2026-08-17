@@ -1,11 +1,11 @@
 ---
 id: TASK-5
 title: Pipeline de preprocesamiento y aumento de datos (A5)
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 00:48'
+updated_date: '2026-08-17 01:59'
 labels:
   - datos
   - bitacora
@@ -22,7 +22,7 @@ documentation:
   - .cursor/rules/python-y-ml.mdc
 priority: high
 type: feature
-ordinal: 5000
+ordinal: 1000
 ---
 
 ## Description
@@ -56,21 +56,21 @@ flowchart TB
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Las particiones de validación y prueba nunca reciben aumento: una prueba automatizada verifica que dos accesos al mismo índice de validación devuelven tensores idénticos
-- [ ] #2 Toda imagen sale como tensor float32 de forma (3, 224, 224) normalizado con las estadísticas de ImageNet, incluidas las originalmente en escala de grises
-- [ ] #3 Las transformaciones se declaran en una fábrica configurable y no están incrustadas dentro del Dataset
-- [ ] #4 El pipeline es determinista bajo semilla fija, incluido DataLoader con num_workers > 0 mediante generator y worker_init_fn explícitos
-- [ ] #5 El aumento elegido está justificado anatómicamente: se documenta por qué se usan rotaciones leves y volteo horizontal y por qué se descarta el volteo vertical
-- [ ] #6 El Dataset lee del manifiesto de task-3 y no vuelve a recorrer el disco, preservando el orden estable de los índices
-- [ ] #7 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-5}, listado de transformaciones y figura de ejemplos antes y después
+- [x] #1 Las particiones de validación y prueba nunca reciben aumento: una prueba automatizada verifica que dos accesos al mismo índice de validación devuelven tensores idénticos
+- [x] #2 Toda imagen sale como tensor float32 de forma (3, 224, 224) normalizado con las estadísticas de ImageNet, incluidas las originalmente en escala de grises
+- [x] #3 Las transformaciones se declaran en una fábrica configurable y no están incrustadas dentro del Dataset
+- [x] #4 El pipeline es determinista bajo semilla fija, incluido DataLoader con num_workers > 0 mediante generator y worker_init_fn explícitos
+- [x] #5 El aumento elegido está justificado anatómicamente: se documenta por qué se usan rotaciones leves y volteo horizontal y por qué se descarta el volteo vertical
+- [x] #6 El Dataset lee del manifiesto de task-3 y no vuelve a recorrer el disco, preservando el orden estable de los índices
+- [x] #7 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-5}, listado de transformaciones y figura de ejemplos antes y después
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #2 Pruebas de determinismo y de contrato de forma y rango de los tensores
-- [ ] #3 Sin rutas absolutas: la raíz de datos proviene de ExperimentConfig
-- [ ] #4 API vigente de torchvision: transforms.v2 sin mezclar con la API clásica
+- [x] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #2 Pruebas de determinismo y de contrato de forma y rango de los tensores
+- [x] #3 Sin rutas absolutas: la raíz de datos proviene de ExperimentConfig
+- [x] #4 API vigente de torchvision: transforms.v2 sin mezclar con la API clásica
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -161,6 +161,8 @@ def construir_loader(dataset, *, batch_size: int, mezclar: bool, semilla: int) -
 5. Escribir la prueba de contrato de tensores: forma `(3, 224, 224)`, `dtype` `float32` y valores compatibles con la normalización aplicada.
 6. Generar una figura con ejemplos antes y después del aumento y guardarla en `results/figures/`.
 7. Registrar el hallazgo en `hallazgos/h0_fundamentos.tex`: listado de transformaciones, justificación anatómica del aumento y figura de ejemplos.
+
+Correcciones al plan original: (1) mapear clase string → int con MAPEO_CLASE derivado de CLASES_ORDEN en src/logging/records.py, no usar clase_id del manifiesto; (2) reutilizar make_worker_init_fn de src/utils/seed.py en lugar de sembrar_worker duplicado; (3) parametrizar num_workers en construir_loader (default 2).
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -176,4 +178,12 @@ def construir_loader(dataset, *, batch_size: int, mezclar: bool, semilla: int) -
 - Con `num_workers > 0`, `set_seed` **no** basta: sin `worker_init_fn` y `generator` explícitos el orden de los lotes y el aumento cambian entre corridas y se pierde la comparabilidad entre modelos.
 - `pin_memory=True` sin CUDA genera advertencias inútiles en macOS; condicionarlo al dispositivo.
 - El `Dataset` debe leer del manifiesto y **no** volver a recorrer el disco: si recorre, el orden puede diferir del que usaron los índices de task-6 y las particiones apuntarían a otras imágenes.
+
+WorkerInitFn en src/utils/seed.py reemplaza cierre local para serialización spawn (macOS). MAPEO_CLASE desde CLASES_ORDEN. Validación: uv run pytest tests/ -q → 25 passed. Figura generada en results/figures/ejemplos_aumento.png.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Pipeline A5: transforms.py (fábrica v2 ImageNet), dataset.py (MRIDataset + manifiesto), loaders.py (DataLoader determinista). 10 pruebas nuevas + hallazgo task-5 en h0_fundamentos.tex. Verificado con pytest (25 passed) y figura de ejemplos con dataset real.
+<!-- SECTION:FINAL_SUMMARY:END -->
