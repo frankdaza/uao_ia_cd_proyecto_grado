@@ -9,6 +9,7 @@ from src.models.backbones import (
     parametros_entrenables,
 )
 from src.models.heads import CabeceraReduccion
+from src.models.hqcnn import HQCNN, contar_parametros_por_bloque, verificar_gradiente
 from src.models.vqc import (
     ESCALA_INICIALIZACION,
     MAPEO_QUBIT_CLASE,
@@ -32,6 +33,9 @@ __all__ = [
     "RUTA_DIAGRAMA_CIRCUITO",
     "VERSIONES_PESOS",
     "CabeceraReduccion",
+    "HQCNN",
+    "contar_parametros_por_bloque",
+    "verificar_gradiente",
     "build_backbone",
     "circuito_vqc",
     "contar_parametros",

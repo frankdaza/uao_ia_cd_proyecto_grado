@@ -4,7 +4,6 @@
 % Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-10: Modelo híbrido HQCNN con TorchLayer (A3)
 % TASK-11: Ablación de profundidad L y presupuesto de cómputo
 
 \subsubsection{Task-7: Extractor congelado y fábrica de backbones (A1)}
@@ -253,3 +252,91 @@ escalado). La selección de $L$ no se fija por intuición sino con la ablación 
 TASK-11. El diagnóstico de gradiente usa entradas aleatorias en $[0,\pi]$; el rango
 real dependerá de la capa densa acotada.
 
+\subsubsection{Task-10: Modelo híbrido HQCNN con TorchLayer (A3)}
+\label{hallazgo:task-10}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A3 --- Integración del modelo híbrido HQCNN (m-1) \\\hline
+\textbf{Artefactos} & \texttt{src/models/hqcnn.py}, \texttt{src/models/\_\_init\_\_.py}, \texttt{tests/test\_hqcnn.py} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Integrar en un único \texttt{nn.Module} el flujo de extremo a extremo: backbone
+EfficientNet-B0 congelado (TASK-7) $\rightarrow$ reducción lineal $\rightarrow$
+acotación de ángulos $\rightarrow$ VQC vía \texttt{qml.qnn.TorchLayer} (TASK-9)
+$\rightarrow$ 4 logits para \texttt{CrossEntropyLoss}. Es el punto donde el diseño
+deja de ser dos piezas y pasa a ser un modelo entrenable con un solo grafo de
+diferenciación~\cite{bergholm2018pennylane,mitarai2018quantum}. El patrón de
+transferencia clásico-cuántico con extractor congelado sigue a~\cite{mari2020transfer}.
+
+\paragraph{Procedimiento.}
+La clase \texttt{HQCNN} reutiliza \texttt{build\_backbone("efficientnet\_b0")} y
+\texttt{CabeceraReduccion(1280 $\rightarrow$ 4)} (misma cabeza que la línea base
+clásica de TASK-12). El QNode \texttt{circuito\_vqc} se envuelve con
+\texttt{TorchLayer}, declarando \texttt{set\_input\_argument("entradas")} porque
+PennyLane exige un argumento de datos con nombre fijo. Los pesos variacionales se
+inicializan con \texttt{inicializar\_pesos} vía \texttt{init\_method} (escala
+$0{,}01$, TASK-9), no con el uniforme $[0,2\pi]$ por defecto de \texttt{TorchLayer}.
+
+La salida de la reducción se acota con $\tanh(x)\cdot\pi$ antes del
+\texttt{AngleEmbedding}: los ángulos son periódicos módulo $2\pi$ y, sin acotación,
+dos características distintas pueden codificarse en el mismo estado sin error visible.
+
+\texttt{HQCNN.train()} mantiene el backbone en \texttt{eval()} para que BatchNorm no
+actualice estadísticas móviles. El extractor corre bajo \texttt{torch.no\_grad()};
+el gradiente fluye solo hacia \texttt{reduccion} y \texttt{vqc}.
+
+Con \texttt{parameter-shift}, PennyLane no admite retropropagación en lotes sobre el
+QNode (issue \#4462): el \texttt{forward} itera muestra a muestra sobre
+\texttt{TorchLayer} y apila los logits. Verificación:
+\begin{verbatim}
+uv run pytest tests/test_hqcnn.py -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Conteo de parámetros por bloque (\texttt{contar\_parametros\_por\_bloque()}, $L=4$):
+
+\begin{center}
+\small
+\begin{tabular}{lrr}\hline
+\textbf{Bloque} & \textbf{Parámetros} & \textbf{Entrenable} \\\hline
+Backbone EfficientNet-B0 & 4\,007\,548 & No (congelado) \\
+Reducción \texttt{CabeceraReduccion} & 5\,124 & Sí \\
+VQC \texttt{StronglyEntanglingLayers} & 48 & Sí \\\hline
+\textbf{Total entrenable} & \multicolumn{2}{c}{5\,172} \\\hline
+\end{tabular}
+\end{center}
+
+Verificación numérica del gradiente (peso de mayor magnitud, CPU, $\varepsilon=10^{-4}$,
+semilla 42): analítico $= 8{,}18\times10^{-2}$, numérico $= 8{,}17\times10^{-2}$
+(relativo $< 0{,}2\,\%$).
+
+Los logits son $\langle Z_i\rangle \in [-1,1]$ por construcción; la confianza máxima
+del \textit{softmax} queda acotada (p.\,ej.\ con logits uniformes en $[-1,1]$ la
+máxima probabilidad es $\approx 0{,}41$). Es propiedad del diseño, no un error de
+entrenamiento; no se añade factor de escala aprendible para preservar la comparabilidad
+factorial (TASK-11/13).
+
+Pruebas automatizadas: \textbf{12 passed} en \texttt{test\_hqcnn.py}; el mismo
+\texttt{Trainer} de TASK-8 entrena el HQCNN una época sin ramas condicionales.
+
+\paragraph{Interpretación.}
+El HQCNN es sustituible por una línea base clásica en el bucle de entrenamiento (LSP):
+solo cambia el módulo posterior al extractor congelado. Con 5\,172 parámetros
+entrenables frente a $\sim 4$ millones congelados, el modelo híbrido concentra la
+capacidad de adaptación en la cabeza y el circuito variacional, coherente con el
+régimen de escasez~\cite{mari2020transfer}. La iteración por muestra en el VQC es el
+cuello de botella de cómputo que TASK-11 debe cuantificar antes de la campaña factorial.
+
+\paragraph{Decisiones.}
+\texttt{CabeceraReduccion} en lugar de \texttt{nn.Linear} suelto (paridad con baseline).
+\texttt{init\_method} con \texttt{inicializar\_pesos}. Sin \texttt{softmax} antes de
+\texttt{CrossEntropyLoss}. Persistencia exclusiva con \texttt{state\_dict()}. Propiedad
+\texttt{n\_capas\_vqc} para duck typing en \texttt{RunRecord}.
+
+\paragraph{Limitaciones.}
+La iteración por muestra escala linealmente con el tamaño de lote y con
+\texttt{parameter-shift} ($2$ evaluaciones por parámetro). El backbone solo soporta
+EfficientNet-B0 en esta entrega; ResNet-50 queda para líneas base (TASK-12). La
+verificación numérica del gradiente usa el peso de mayor magnitud porque el primero
+puede tener gradiente casi nulo en la inicialización.
