@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:40'
-updated_date: '2026-08-17 01:34'
+updated_date: '2026-08-17 02:25'
 labels:
   - tesis
   - bitacora
@@ -179,6 +179,8 @@ pdflatex "Bitacora Metodologica de Hallazgos.tex"
 **Convención de trazabilidad.** Una tarea sin `\label{hallazgo:task-N}` en el fragmento correspondiente se considera no documentada, aunque haya producido CSV en `results/`.
 
 Validación: pdflatex+bibtex+pdflatex×2 desde docs/trabajo_de_grado/ → PDF 6 páginas sin errores. Cita bergholm2018pennylane resuelta en .bbl. Hallazgos task-1 (retroactivo, mps, pérdida 1.54205954) y task-2 registrados. Anteproyecto sin cambios (git diff vacío).
+
+Revisión Fase 0: rutas de figuras corregidas (../../results/figures); síntesis D1 completada en bitácora.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

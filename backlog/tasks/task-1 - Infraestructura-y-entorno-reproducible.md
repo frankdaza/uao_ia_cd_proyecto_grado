@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:40'
-updated_date: '2026-08-17 01:29'
+updated_date: '2026-08-17 02:25'
 labels:
   - infra
 milestone: m-0
@@ -164,6 +164,8 @@ def get_device() -> torch.device:
 Mejoras aplicadas al plan: raiz_figuras en config, smoke.py en entregables, set_seed(semilla) sin default duplicado, make_worker_init_fn para task-5. Bitácora (plan paso 7) se pospone a task-2.
 
 Validación: uv sync --frozen OK; uv run python -m src.smoke PASS (mps, pérdida=1.54205954 bit a bit); ruff check src/ sin errores. Ajuste: pennylane-lightning==0.45.0 (0.45.1 no publicado en PyPI).
+
+Revisión Fase 0: bitácora actualizada con pennylane-lightning==0.45.0 en hallazgo task-1.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

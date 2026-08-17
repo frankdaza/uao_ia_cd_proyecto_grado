@@ -117,8 +117,8 @@ def _submuestreo_anidado(
 def construir_particiones(
     etiquetas: np.ndarray,
     *,
-    n_folds: int = 5,
-    semilla: int = 42,
+    n_folds: int,
+    semilla: int,
 ) -> list[dict[str, Any]]:
     """Construye todas las particiones del proyecto según la decisión D1.
 

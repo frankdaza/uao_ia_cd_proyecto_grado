@@ -53,8 +53,12 @@ models/*
 !models/.gitkeep
 results/*
 !results/.gitkeep
+!results/dataset_manifest.csv
+!results/dataset_audit.md
 !results/splits.json
 !results/splits_summary.md
 !results/figures/
 results/figures/*
 !results/figures/.gitkeep
+!results/figures/distribucion_clases.png
+!results/figures/ejemplos_aumento.png

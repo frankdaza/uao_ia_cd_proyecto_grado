@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 01:53'
+updated_date: '2026-08-17 02:25'
 labels:
   - infra
   - bitacora
@@ -198,6 +198,8 @@ def aplanar(registro: RunRecord) -> dict[str, float | int | str]:
 **Regla de diseño.** El `Trainer` de task-8 **no** conoce el formato de salida: emite `RunRecord` y el *sink* decide destino. Así se cumple DIP y se puede añadir un destino nuevo sin tocar el bucle de entrenamiento.
 
 Implementado src/logging/{records,timing,sinks}.py con COLUMNAS_CSV, validación, aplanar() y sinks CSV/wandb/JSON. Historial: {modelo}_{fraccion}_f{fold}_s{semilla}.json. pytest: 15 passed.
+
+Revisión Fase 0: hallazgo reordenado 1-6 en h0_fundamentos.tex.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

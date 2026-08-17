@@ -26,7 +26,8 @@ uv run python -m src.smoke
 
 \paragraph{Resultados.}
 Stack congelado: Python 3.12, PyTorch 2.9.1, torchvision 0.24.1,
-PennyLane 0.45.1, NumPy $\geq 2.0,< 2.3$.
+\texttt{pennylane==0.45.1}, \texttt{pennylane-lightning==0.45.0} (0.45.1 de
+\textit{lightning} no está publicado en PyPI), NumPy $\geq 2.0,< 2.3$.
 Dispositivo detectado: \textbf{mps}.
 Pérdida de referencia (dos corridas idénticas): \textbf{1.54205954}.
 Resultado reproducibilidad: \textbf{PASS}.
@@ -112,11 +113,14 @@ uv run python -m src.data.audit
 \paragraph{Resultados.}
 Total inventariado: \textbf{7023} imágenes (coincide con el anteproyecto).
 Extensiones: solo \texttt{.jpg}. Imágenes corruptas: \textbf{0}.
-Duplicados exactos (grupos con $n>1$): intra clase \textbf{194}, entre clases
-\textbf{0}, Training$\leftrightarrow$Testing \textbf{79}.
+Duplicados exactos: \textbf{194} grupos con $n>1$ (491 archivos involucrados);
+intra clase \textbf{194}, entre clases \textbf{0}, Training$\leftrightarrow$Testing
+\textbf{79} (subconjunto de los 194 grupos intra-clase).
 Exclusiones: \textbf{297} filas (\texttt{duplicado\_exacto}: 194;
 \texttt{fuga\_train\_test}: 103). Utilizables: \textbf{6726}.
+La clase \texttt{notumor} concentra \textbf{269/297} exclusiones (90\,\%).
 
+\textbf{Tabla 1 --- Inventario completo (7023 imágenes, antes de exclusiones):}
 \begin{center}
 \begin{tabular}{lrrrr}\hline
 \textbf{Clase} & \textbf{Testing} & \textbf{Training} & \textbf{Total} \\\hline
@@ -128,14 +132,27 @@ pituitary    & 300 & 1457 & 1757 \\\hline
 \end{tabular}
 \end{center}
 
+\textbf{Tabla 2 --- Imágenes utilizables (6726, tras exclusiones):}
+\begin{center}
+\begin{tabular}{lrrrr}\hline
+\textbf{Clase} & \textbf{Testing} & \textbf{Training} & \textbf{Total} \\\hline
+glioma       & 299 & 1321 & 1620 \\
+meningioma   & 302 & 1333 & 1635 \\
+notumor      & 309 & 1422 & 1731 \\
+pituitary    & 295 & 1445 & 1740 \\\hline
+\textbf{Total} & 1205 & 5521 & 6726 \\\hline
+\end{tabular}
+\end{center}
+
 Heterogeneidad: modos \texttt{L} (3093), \texttt{RGB} (3926), \texttt{P}/\texttt{RGBA} (4);
 resolución dominante $512\times512$ (4742 imágenes). Las cuatro clases corresponden
 a categorías del sistema nervioso central en la clasificación WHO 2021~\cite{louis20212021}.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{../../../results/figures/distribucion_clases}
-\caption{Distribución de clases por partición (imágenes no excluidas).}
+\includegraphics[width=0.85\textwidth]{../../results/figures/distribucion_clases}
+\caption{Distribución de clases por partición sobre las \textbf{6726} imágenes utilizables
+(no excluidas). La Tabla~1 del texto reporta el inventario completo de 7023.}
 \label{fig:distribucion-clases-task3}
 \end{figure}
 
@@ -145,168 +162,22 @@ modo de color y resolución; la auditoría confirma que el tamaño declarado es 
 pero existen duplicados exactos y fuga potencial entre \texttt{Training/} y
 \texttt{Testing/}. Sin esta verificación, la exactitud de modelos posteriores
 podría inflarse por memorización de copias idénticas~\cite{haddou2025hqcm}.
+Tras la curaduría, el desbalance aparente entre \texttt{notumor} y las demás clases
+se reduce (2000 $\rightarrow$ 1731 frente a $\sim$1620--1740 en el resto).
 
 \paragraph{Decisiones.}
 Unir \texttt{Training/} y \texttt{Testing/} al conjunto completo para validación
-cruzada estratificada $k=5$ (decisión D1, TASK-6); no se usa \texttt{Testing/} como
-holdout externo. Las exclusiones quedan en \texttt{dataset\_manifest.csv} mediante
-columnas \texttt{excluida} y \texttt{motivo\_exclusion}.
+cruzada estratificada $k=5$ (decisión D1, TASK-6).
+\textbf{Holdout externo considerado y descartado:} el anteproyecto prescribe $k$-fold,
+no evaluación sobre el split original de Kaggle; además, 79 grupos de duplicados
+cruzan \texttt{Training/} y \texttt{Testing/}, lo que invalidaría un holdout limpio.
+Las exclusiones quedan en \texttt{dataset\_manifest.csv} mediante columnas
+\texttt{excluida} y \texttt{motivo\_exclusion}; se conserva una copia por hash.
 
 \paragraph{Limitaciones.}
 El hash SHA-256 detecta duplicados byte a byte, no re-codificaciones JPEG con distinta
 compresión. La conversión a 3 canales y el redimensionado a $224\times224$ se
 documentan en TASK-5.
-
-\subsubsection{Task-5: Pipeline de preprocesamiento y aumento de datos (A5)}
-\label{hallazgo:task-5}
-\begin{tabularx}{\textwidth}{|l|X|}\hline
-\textbf{Fecha} & 2026-08-17 \\\hline
-\textbf{Actividad} & A5 --- Preprocesamiento y aumento de datos (m-0) \\\hline
-\textbf{Artefactos} & \texttt{src/data/transforms.py}, \texttt{src/data/dataset.py}, \texttt{src/data/loaders.py}, \texttt{tests/test\_transforms.py}, \texttt{tests/test\_dataset.py}, \texttt{results/figures/ejemplos\_aumento.png} \\\hline
-\end{tabularx}
-
-\paragraph{Objetivo.}
-Definir el pipeline de entrada para los \textit{backbones} preentrenados en ImageNet:
-redimensionado a $224\times224$, normalización con las estadísticas de ImageNet y aumento
-de datos \textbf{únicamente en entrenamiento}, siguiendo buenas prácticas de preparación
-de datos en imagen médica~\cite{willemink2020preparing,litjens2017survey}.
-
-\paragraph{Procedimiento.}
-Transformaciones declaradas en \texttt{construir\_transformaciones()} (API
-\texttt{torchvision.transforms.v2}, sin mezclar con la API clásica):
-\begin{enumerate}
-  \item \texttt{Resize((224, 224))}
-  \item \textbf{Solo entrenamiento:} \texttt{RandomRotation($\pm 10^\circ$, fill=0)} y
-        \texttt{RandomHorizontalFlip(p=0.5)}
-  \item \texttt{ToImage()} $\rightarrow$ \texttt{ToDtype(float32, scale=True)}
-  \item \texttt{Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))}
-\end{enumerate}
-El \texttt{MRIDataset} lee del manifiesto auditado (TASK-3), convierte siempre a RGB
-(incluidas imágenes en modo \texttt{L}) y mapea la etiqueta con
-\texttt{MAPEO\_CLASE} alineado a TASK-4. Los \texttt{DataLoader} usan
-\texttt{generator} y \texttt{WorkerInitFn} (serializable en \texttt{spawn}) para
-reproducibilidad con \texttt{num\_workers > 0}. Verificación:
-\begin{verbatim}
-uv run pytest tests/test_transforms.py tests/test_dataset.py -q
-\end{verbatim}
-
-\paragraph{Resultados.}
-Toda imagen sale como tensor \texttt{float32} de forma $(3, 224, 224)$.
-Pruebas automatizadas: \textbf{10 passed} (determinismo en validación, variación en
-entrenamiento, contrato de forma, grises a 3 canales, loader determinista con 2 workers).
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.95\textwidth]{../../../results/figures/ejemplos_aumento}
-\caption{Ejemplos de preprocesamiento: original, validación (sin aumento) y entrenamiento
-(con rotación leve y volteo horizontal).}
-\label{fig:ejemplos-aumento-task5}
-\end{figure}
-
-\paragraph{Interpretación.}
-Los \textit{backbones} EfficientNet-B0 y ResNet-50 esperan entradas calibradas con
-ImageNet~\cite{tan2019efficientnet}; normalizar con estadísticas del dataset propio
-degradaría las características transferidas de un modelo congelado. El aumento se
-aplica \textbf{después} de fijar las particiones (TASK-6): aumentar antes de partir
-filtraría variantes de la misma imagen entre entrenamiento y validación.
-
-\paragraph{Decisiones.}
-\textbf{Volteo horizontal} ($p=0.5$): defendible por la simetría aproximada del cerebro
-en cortes axiales. \textbf{Rotaciones leves} ($\pm 10^\circ$): variabilidad de
-posicionamiento del paciente sin distorsionar la anatomía. \textbf{Volteo vertical
-descartado}: produce anatomías imposibles en MRI axial. \texttt{fill=0} en rotación:
-coherente con el fondo negro típico de MRI. Validación y prueba \textbf{nunca} reciben
-aumento.
-
-\paragraph{Limitaciones.}
-El aumento no sustituye la auditoría de duplicados (TASK-3). La justificación anatómica
-no garantiza que toda variante sintética sea clínicamente plausible; un aumento agresivo
-introduciría sesgo en lugar de robustez~\cite{willemink2020preparing}.
-
-% --- Tareas pendientes en este fragmento ---
-% (ninguna en h0 tras TASK-6)
-
-\subsubsection{Task-6: Protocolo de particiones — holdout, k-fold estratificado y fracciones (A7)}
-\label{hallazgo:task-6}
-\begin{tabularx}{\textwidth}{|l|X|}\hline
-\textbf{Fecha} & 2026-08-17 \\\hline
-\textbf{Actividad} & A7 --- Diseño de escenarios de escasez; base de A8 (m-0) \\\hline
-\textbf{Artefactos} & \texttt{src/data/splits.py}, \texttt{results/splits.json}, \texttt{results/splits\_summary.md}, \texttt{tests/test\_splits.py} \\\hline
-\end{tabularx}
-
-\paragraph{Objetivo.}
-Fijar un protocolo único de particiones para que los tres modelos (HQCNN, EfficientNet-B0,
-ResNet-50) vean exactamente los mismos datos en cada celda del diseño factorial
-$3 \times 4 \times 5$, evitando que diferencias entre arquitecturas se confundan con ruido
-de remuestreo~\cite{caro2022generalization,gupta2025systematic,khan2024brain}.
-
-\paragraph{Procedimiento.}
-Sobre el manifiesto auditado (6726 imágenes utilizables, TASK-3), ordenado por
-\texttt{ruta\_relativa} con \texttt{mergesort}:
-\begin{enumerate}
-  \item \texttt{StratifiedKFold} con $k=5$, \texttt{shuffle=True}, \texttt{random\_state=42}
-        sobre el conjunto completo (decisión D1).
-  \item Validación de tamaño \textbf{fijo} por fold; idéntica en las cuatro fracciones.
-  \item Submuestreo estratificado \textbf{anidado} solo del entrenamiento en cascada
-        $100\% \rightarrow 50\% \rightarrow 25\% \rightarrow 10\%$ con
-        \texttt{StratifiedShuffleSplit} y \texttt{train\_size} entero.
-  \item Persistencia determinista en \texttt{results/splits.json} con hash SHA-256 del
-        manifiesto y validación al cargar.
-\end{enumerate}
-Ejecución:
-\begin{verbatim}
-uv run python -m src.data.splits
-uv run pytest tests/test_splits.py -q
-\end{verbatim}
-
-\paragraph{Decisión D1 frente a la redacción literal de A8.}
-El anteproyecto prescribe validación cruzada estratificada en cada escenario de escasez.
-La lectura literal ---submuestrear primero al 10\,\% y \emph{luego} partir en folds---
-dejaría $\sim$140 imágenes de validación por fold al 10\,\%, con varianza que dominaría
-el efecto buscado. Se adopta el orden inverso: \textbf{folds fijos primero; escasez solo
-en entrenamiento}. Así las curvas de escasez miden \emph{cantidad} de datos y no
-\emph{identidad} de los datos (anidamiento garantizado). La validación fija también
-reduce la inestabilidad de estimadores por \textit{split} único en imagen médica~\cite{li2021cvstability}.
-
-\paragraph{Resultados.}
-Artefacto: \texttt{results/splits.json} (5 folds $\times$ 4 fracciones).
-Hash del manifiesto: \texttt{30fb5b43...129ca}.
-Pruebas automatizadas: \textbf{9 passed} (anidamiento, estratificación $\pm 2\%$,
-disyunción train/val, validación idéntica entre fracciones, determinismo, hash).
-
-Piso del escenario más extremo (10\,\% de entrenamiento, fold 0):
-
-\begin{center}
-\begin{tabular}{lrrrrr}\hline
-\textbf{Fracción} & \textbf{Total train} & \textbf{glioma} & \textbf{meningioma} & \textbf{pituitary} & \textbf{notumor} \\\hline
-0.10 & 538 & 130 & 131 & 139 & 138 \\
-0.25 & 1345 & 324 & 327 & 348 & 346 \\
-0.50 & 2690 & 648 & 654 & 696 & 692 \\
-1.00 & 5380 & 1296 & 1308 & 1392 & 1384 \\\hline
-\end{tabular}
-\end{center}
-
-Validación fold 0: 1346 imágenes (constante en las cuatro fracciones).
-Mínimo por clase al 10\,\%: 130 imágenes ($\gg$ \texttt{batch\_size=32}).
-
-\paragraph{Interpretación.}
-Persistir índices en disco convierte la comparación entre modelos en \textbf{pareada} y la
-campaña en reanudable: el \texttt{Trainer} (TASK-8) leerá \texttt{obtener\_indices()} y
-nunca remuestreará. Sin anidamiento, una caída de exactitud al 10\,\% no distinguiría
-``menos datos'' de ``otros datos''.
-
-\paragraph{Decisiones.}
-Fracciones: 10\,\%, 25\,\%, 50\,\%, 100\,\%.
-Semilla global 42; semilla de submuestreo por fold: \texttt{semilla + k}.
-Tolerancia de estratificación declarada: $\pm 2\%$ respecto a la proporción global.
-\texttt{drop\_last=True} en entrenamiento cuando el último lote sea de tamaño 1
-(documentado para TASK-8).
-
-\paragraph{Limitaciones.}
-Los 5 folds \textbf{comparten} observaciones entre sí: no son 5 muestras independientes.
-Esta no independencia condiciona la ANOVA de TASK-15 y debe declararse en el análisis
-estadístico. Si el manifiesto cambia sin regenerar \texttt{splits.json}, los índices
-apuntan a otras imágenes sin error visible: por eso se valida el hash al cargar.
 
 \subsubsection{Task-4: Contrato de métricas, logging y artefactos}
 \label{hallazgo:task-4}
@@ -382,3 +253,179 @@ para evitar colisiones futuras.
 El CSV en modo \textit{append} no es seguro ante escritura paralela; si se paraleliza la
 campaña, escribir un CSV por corrida y consolidar en TASK-14. \texttt{wandb.init()} queda
 fuera del \textit{sink}; el orquestador debe inicializar la sesión.
+
+\subsubsection{Task-5: Pipeline de preprocesamiento y aumento de datos (A5)}
+\label{hallazgo:task-5}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A5 --- Preprocesamiento y aumento de datos (m-0) \\\hline
+\textbf{Artefactos} & \texttt{src/data/transforms.py}, \texttt{src/data/dataset.py}, \texttt{src/data/loaders.py}, \texttt{tests/test\_transforms.py}, \texttt{tests/test\_dataset.py}, \texttt{results/figures/ejemplos\_aumento.png} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Definir el pipeline de entrada para los \textit{backbones} preentrenados en ImageNet:
+redimensionado a $224\times224$, normalización con las estadísticas de ImageNet y aumento
+de datos \textbf{únicamente en entrenamiento}, siguiendo buenas prácticas de preparación
+de datos en imagen médica~\cite{willemink2020preparing,litjens2017survey}.
+
+\paragraph{Procedimiento.}
+Transformaciones declaradas en \texttt{construir\_transformaciones()} (API
+\texttt{torchvision.transforms.v2}, sin mezclar con la API clásica):
+\begin{enumerate}
+  \item \texttt{Resize((224, 224))}
+  \item \textbf{Solo entrenamiento:} \texttt{RandomRotation($\pm 10^\circ$, fill=0)} y
+        \texttt{RandomHorizontalFlip(p=0.5)}
+  \item \texttt{ToImage()} $\rightarrow$ \texttt{ToDtype(float32, scale=True)}
+  \item \texttt{Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))}
+\end{enumerate}
+El \texttt{MRIDataset} lee del manifiesto auditado (TASK-3), convierte siempre a RGB
+(incluidas imágenes en modo \texttt{L}) y mapea la etiqueta con
+\texttt{MAPEO\_CLASE} alineado a TASK-4. Los \texttt{DataLoader} usan
+\texttt{generator} y \texttt{WorkerInitFn} (serializable en \texttt{spawn}) para
+reproducibilidad con \texttt{num\_workers > 0}. Verificación:
+\begin{verbatim}
+uv run pytest tests/test_transforms.py tests/test_dataset.py -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Toda imagen sale como tensor \texttt{float32} de forma $(3, 224, 224)$.
+Pruebas automatizadas: \textbf{10 passed} (determinismo en validación, variación en
+entrenamiento, contrato de forma, grises a 3 canales, loader determinista con 2 workers).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{../../results/figures/ejemplos_aumento}
+\caption{Ejemplos de preprocesamiento: original, validación (sin aumento) y entrenamiento
+(con rotación leve y volteo horizontal).}
+\label{fig:ejemplos-aumento-task5}
+\end{figure}
+
+\paragraph{Interpretación.}
+Los \textit{backbones} EfficientNet-B0 y ResNet-50 esperan entradas calibradas con
+ImageNet~\cite{tan2019efficientnet}; normalizar con estadísticas del dataset propio
+degradaría las características transferidas de un modelo congelado. El aumento se
+aplica \textbf{después} de fijar las particiones (TASK-6): aumentar antes de partir
+filtraría variantes de la misma imagen entre entrenamiento y validación.
+
+\paragraph{Decisiones.}
+\textbf{Volteo horizontal} ($p=0.5$): defendible por la simetría aproximada del cerebro
+en cortes axiales. \textbf{Rotaciones leves} ($\pm 10^\circ$): variabilidad de
+posicionamiento del paciente sin distorsionar la anatomía. \textbf{Volteo vertical
+descartado}: produce anatomías imposibles en MRI axial. \texttt{fill=0} en rotación:
+coherente con el fondo negro típico de MRI. Validación y prueba \textbf{nunca} reciben
+aumento.
+
+\paragraph{Limitaciones.}
+El aumento no sustituye la auditoría de duplicados (TASK-3). La justificación anatómica
+no garantiza que toda variante sintética sea clínicamente plausible; un aumento agresivo
+introduciría sesgo en lugar de robustez~\cite{willemink2020preparing}.
+
+\subsubsection{Task-6: Protocolo de particiones — holdout, k-fold estratificado y fracciones (A7)}
+\label{hallazgo:task-6}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A7 --- Diseño de escenarios de escasez; base de A8 (m-0) \\\hline
+\textbf{Artefactos} & \texttt{src/data/splits.py}, \texttt{results/splits.json}, \texttt{results/splits\_summary.md}, \texttt{tests/test\_splits.py} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Fijar un protocolo único de particiones para que los tres modelos (HQCNN, EfficientNet-B0,
+ResNet-50) vean exactamente los mismos datos en cada celda del diseño factorial
+$3 \times 4 \times 5$, evitando que diferencias entre arquitecturas se confundan con ruido
+de remuestreo~\cite{caro2022generalization,gupta2025systematic,khan2024brain}.
+
+\paragraph{Procedimiento.}
+Sobre el manifiesto auditado (6726 imágenes utilizables, TASK-3), ordenado por
+\texttt{ruta\_relativa} con \texttt{mergesort}:
+\begin{enumerate}
+  \item \texttt{StratifiedKFold} con $k=5$, \texttt{shuffle=True}, \texttt{random\_state=42}
+        sobre el conjunto completo (decisión D1).
+  \item Validación de tamaño \textbf{fijo} por fold; idéntica en las cuatro fracciones.
+  \item Submuestreo estratificado \textbf{anidado} solo del entrenamiento en cascada
+        $100\% \rightarrow 50\% \rightarrow 25\% \rightarrow 10\%$ con
+        \texttt{StratifiedShuffleSplit} y \texttt{train\_size} entero.
+  \item Persistencia determinista en \texttt{results/splits.json} con hash SHA-256 del
+        manifiesto y validación al cargar.
+\end{enumerate}
+Ejecución:
+\begin{verbatim}
+uv run python -m src.data.splits
+uv run pytest tests/test_splits.py -q
+\end{verbatim}
+
+\paragraph{Decisión D1 frente a la redacción literal de A8.}
+El anteproyecto prescribe validación cruzada estratificada en cada escenario de escasez.
+La lectura literal ---submuestrear primero al 10\,\% y \emph{luego} partir en folds---
+dejaría $\sim$140 imágenes de validación por fold al 10\,\%, con varianza que dominaría
+el efecto buscado. Se adopta el orden inverso: \textbf{folds fijos primero; escasez solo
+en entrenamiento}. Así las curvas de escasez miden \emph{cantidad} de datos y no
+\emph{identidad} de los datos (anidamiento garantizado). La validación fija también
+reduce la inestabilidad de estimadores por \textit{split} único en imagen médica~\cite{li2021cvstability}.
+\textbf{Holdout externo descartado} (ver TASK-3): el split Kaggle no es defendible por
+duplicados cruzados entre \texttt{Training/} y \texttt{Testing/}.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=0.9cm and 1.2cm,
+  box/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=0.7cm, font=\small},
+  arrow/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[box] (full) {Manifiesto\\6726 util.};
+  \node[box, below=of full] (skf) {StratifiedKFold\\$k{=}5$, semilla 42};
+  \node[box, below left=0.8cm and 0.2cm of skf] (val) {val\_idx\\tamaño fijo};
+  \node[box, below right=0.8cm and 0.2cm of skf] (sub) {Submuestreo\\anidado train};
+  \node[box, below=of sub] (frac) {10\,\% $\subset$ 25\,\% $\subset$\\50\,\% $\subset$ 100\,\%};
+  \node[box, below=1.1cm of skf] (json) {results/splits.json};
+  \draw[arrow] (full) -- (skf);
+  \draw[arrow] (skf) -- (val);
+  \draw[arrow] (skf) -- (sub);
+  \draw[arrow] (sub) -- (frac);
+  \draw[arrow] (val) -- (json);
+  \draw[arrow] (frac) -- (json);
+\end{tikzpicture}
+\caption{Diagrama del protocolo D1: folds fijos sobre el conjunto completo; escasez
+aplicada solo al entrenamiento con anidamiento entre fracciones.}
+\label{fig:diagrama-d1-task6}
+\end{figure}
+
+\paragraph{Resultados.}
+Artefacto: \texttt{results/splits.json} (5 folds $\times$ 4 fracciones).
+Hash del manifiesto: \texttt{30fb5b4334444b9d37924ac864d2cfc310347cdefb866ee23605214bbee129ca}.
+Pruebas automatizadas: \textbf{9 passed} (anidamiento, estratificación $\pm 2\%$,
+disyunción train/val, validación idéntica entre fracciones, determinismo, hash).
+
+Piso del escenario más extremo (10\,\% de entrenamiento, fold 0):
+
+\begin{center}
+\begin{tabular}{lrrrrr}\hline
+\textbf{Fracción} & \textbf{Total train} & \textbf{glioma} & \textbf{meningioma} & \textbf{pituitary} & \textbf{notumor} \\\hline
+0.10 & 538 & 130 & 131 & 139 & 138 \\
+0.25 & 1345 & 324 & 327 & 348 & 346 \\
+0.50 & 2690 & 648 & 654 & 696 & 692 \\
+1.00 & 5380 & 1296 & 1308 & 1392 & 1384 \\\hline
+\end{tabular}
+\end{center}
+
+Validación fold 0: 1346 imágenes (constante en las cuatro fracciones).
+Folds 1--4: validación 1345 imágenes; entrenamiento al 100\,\%: 5381 imágenes.
+Mínimo por clase al 10\,\%: 130 imágenes ($\gg$ \texttt{batch\_size=32}).
+
+\paragraph{Interpretación.}
+Persistir índices en disco convierte la comparación entre modelos en \textbf{pareada} y la
+campaña en reanudable: el \texttt{Trainer} (TASK-8) leerá \texttt{obtener\_indices()} y
+nunca remuestreará. Sin anidamiento, una caída de exactitud al 10\,\% no distinguiría
+``menos datos'' de ``otros datos''.
+
+\paragraph{Decisiones.}
+Fracciones: 10\,\%, 25\,\%, 50\,\%, 100\,\%.
+Semilla global 42; semilla de submuestreo por fold: \texttt{semilla + k}.
+Tolerancia de estratificación declarada: $\pm 2\%$ respecto a la proporción global.
+\texttt{drop\_last=True} en entrenamiento cuando el último lote sea de tamaño 1
+(documentado para TASK-8).
+
+\paragraph{Limitaciones.}
+Los 5 folds \textbf{comparten} observaciones entre sí: no son 5 muestras independientes.
+Esta no independencia condiciona la ANOVA de TASK-15 y debe declararse en el análisis
+estadístico. Si el manifiesto cambia sin regenerar \texttt{splits.json}, los índices
+apuntan a otras imágenes sin error visible: por eso se valida el hash al cargar.

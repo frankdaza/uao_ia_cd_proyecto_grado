@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 01:59'
+updated_date: '2026-08-17 02:25'
 labels:
   - datos
   - bitacora
@@ -180,6 +180,8 @@ Correcciones al plan original: (1) mapear clase string → int con MAPEO_CLASE d
 - El `Dataset` debe leer del manifiesto y **no** volver a recorrer el disco: si recorre, el orden puede diferir del que usaron los índices de task-6 y las particiones apuntarían a otras imágenes.
 
 WorkerInitFn en src/utils/seed.py reemplaza cierre local para serialización spawn (macOS). MAPEO_CLASE desde CLASES_ORDEN. Validación: uv run pytest tests/ -q → 25 passed. Figura generada en results/figures/ejemplos_aumento.png.
+
+Revisión Fase 0: WorkerInitFn usa torch.initial_seed(); suite 39 passed.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

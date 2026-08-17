@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 01:46'
+updated_date: '2026-08-17 02:25'
 labels:
   - datos
   - bitacora
@@ -180,6 +180,8 @@ uv run python -m src.data.audit
 Prerequisito local (Mac Studio): dataset en notebooks/data/ enlazado por symlink a data/brain_tumor_mri/. Sin duplicar imágenes.
 
 Auditoría ejecutada: 7023 imágenes (.jpg), 0 corruptas, 6726 utilizables, 297 excluidas (194 duplicado_exacto, 103 fuga_train_test). Duplicados: intra=194, entre_clases=0, train/test=79. Decisión: unir Training+Testing para k-fold D1. Symlink data/brain_tumor_mri -> notebooks/data.
+
+Revisión Fase 0: bitácora con tablas inventario vs utilizables, concentración notumor 269/297 exclusiones; tests/test_audit.py (5 passed).
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

@@ -1,5 +1,7 @@
 \documentclass[12pt,letterpaper]{article}
 \input{preambulo_uao}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
 
 \title{Bitácora Metodológica de Hallazgos}
 \author{Frank Daza}
@@ -88,12 +90,22 @@ desde \texttt{results/figures/}.
 Esta sección consolida las decisiones congeladas a medida que avanza el proyecto:
 
 \begin{itemize}
-    \item \textbf{D1} — Orden de particiones y fracciones de escasez (tarea 6).
-    \item \textbf{D2} — Profundidad $L$ del VQC y presupuesto de cómputo (tarea 11).
-    \item \textbf{Go/no-go} — Criterio de viabilidad antes de la campaña experimental completa.
+    \item \textbf{D1} --- Orden de particiones y fracciones de escasez (tarea 6).
+    Ver~\ref{hallazgo:task-6} y Figura~\ref{fig:diagrama-d1-task6}.
+    \begin{itemize}
+        \item Unir \texttt{Training/} y \texttt{Testing/} tras auditoría (6726 imágenes utilizables).
+        \item \texttt{StratifiedKFold} con $k=5$, \texttt{random\_state=42}, sobre el conjunto completo.
+        \item Validación de tamaño fijo por fold; idéntica en las cuatro fracciones de escasez.
+        \item Submuestreo estratificado \textbf{anidado} solo del entrenamiento: 10\,\% $\subset$ 25\,\% $\subset$ 50\,\% $\subset$ 100\,\%.
+        \item Índices persistidos en \texttt{results/splits.json} con validación de hash del manifiesto.
+        \item Holdout externo sobre \texttt{Testing/} descartado (duplicados cruzados y diseño del anteproyecto).
+        \item Lectura literal de A8 (submuestrear antes de partir) rechazada: varianza de validación dominaría al 10\,\%.
+    \end{itemize}
+    \item \textbf{D2} --- Profundidad $L$ del VQC y presupuesto de cómputo (tarea 11).
+    \item \textbf{Go/no-go} --- Criterio de viabilidad antes de la campaña experimental completa.
 \end{itemize}
 
-Las entradas se completarán conforme se ejecuten las tareas correspondientes.
+Las entradas D2 y go/no-go se completarán conforme se ejecuten las tareas 11 y 13.
 
 \bibliographystyle{apalike}
 \bibliography{../proyecto_de_grado/Referencias}

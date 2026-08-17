@@ -108,6 +108,7 @@ flowchart LR
 | `results/` | Métricas tabulares, historiales por época y particiones (`splits.json`) |
 | `results/figures/` | Figuras, matrices de confusión y fragmentos LaTeX generados |
 | `docs/proyecto_de_grado/` | Anteproyecto, referencias BibTeX y documentación de la tesis |
+| `docs/trabajo_de_grado/` | Bitácora de hallazgos, esqueleto del trabajo de grado y capítulos |
 
 ## Entorno local (UV)
 

@@ -37,7 +37,10 @@ class WorkerInitFn:
         self._semilla = semilla
 
     def __call__(self, worker_id: int) -> None:
-        set_seed(self._semilla + worker_id)
+        del worker_id
+        semilla_worker = torch.initial_seed() % 2**32
+        np.random.seed(semilla_worker)
+        random.seed(semilla_worker)
 
 
 def make_worker_init_fn(semilla: int) -> WorkerInitFn:

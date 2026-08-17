@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 02:04'
+updated_date: '2026-08-17 02:25'
 labels:
   - escasez
   - bitacora
@@ -181,6 +181,8 @@ uv run python -m src.data.splits
 **Piso metodológico.** Si al 10 % alguna clase queda por debajo de un mínimo razonable para estimar métricas por clase, la fracción más agresiva debe reconsiderarse y la decisión quedar escrita, en lugar de reportar sensibilidad calculada sobre un puñado de imágenes.
 
 Validación: uv run pytest tests/test_splits.py -q → 9 passed. splits.json SHA-256: 1b4225f8d61115818a5bc7cda9a6eb144812ec466fe0fad6c0c79b815d831345 (regeneración bit a bit verificada). manifest_hash: 30fb5b4334444b9d37924ac864d2cfc310347cdefb866ee23605214bbee129ca. Piso 10%: mín 130 img/clase/fold. Gitignore actualizado para versionar splits.json. BibTeX li2021cvstability añadido.
+
+Revisión Fase 0: diagrama TikZ D1, hash manifiesto completo, holdout explícito; artefactos versionados en git.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
