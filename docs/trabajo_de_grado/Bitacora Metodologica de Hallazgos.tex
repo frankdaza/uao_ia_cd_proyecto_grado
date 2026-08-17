@@ -1,0 +1,100 @@
+\documentclass[12pt,letterpaper]{article}
+\input{preambulo_uao}
+
+\title{Bitácora Metodológica de Hallazgos}
+\author{Frank Daza}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Propósito y convenciones}
+
+Este documento es el \textbf{registro empírico} de la ejecución del proyecto de grado.
+A diferencia del anteproyecto en \texttt{docs/proyecto\_de\_grado/}, que es prospectivo,
+la bitácora acumula evidencia conforme se completan las tareas del backlog.
+Cada hallazgo queda ligado a artefactos en \texttt{results/} y \texttt{models/}.
+
+\subsection{Flujo documental}
+
+El anteproyecto define el problema y el diseño metodológico.
+Esta bitácora registra lo ejecutado (tareas 3--16).
+El documento final (\texttt{Trabajo de Grado - Frank Daza.tex}, tarea 17) sintetiza
+los hallazgos con referencias cruzadas \texttt{\textbackslash ref\{hallazgo:task-N\}}.
+Derivados posteriores: artículo científico (tarea 18) y ponencia (tarea 19).
+
+\subsection{Trazabilidad obligatoria}
+
+Toda tarea del backlog que produzca evidencia experimental debe registrar un hallazgo
+con la etiqueta \texttt{\textbackslash label\{hallazgo:task-N\}}, donde \texttt{N}
+es el identificador numérico de la tarea.
+Una tarea sin esta etiqueta se considera \textbf{no documentada}, aunque haya generado
+CSV en \texttt{results/}.
+
+\subsection{Política de bibliografía}
+
+La bibliografía es \textbf{compartida} con el anteproyecto:
+\texttt{docs/proyecto\_de\_grado/Referencias.bib}.
+Está prohibido duplicar entradas en un \texttt{.bib} local.
+Las citas nuevas se agregan con el skill \texttt{agregar-cita} sobre el archivo compartido.
+Motor: \texttt{natbib} + estilo \texttt{apalike}.
+
+\subsection{Plantilla estándar de hallazgo}
+
+Toda tarea posterior debe replicar la siguiente estructura en el fragmento
+\texttt{hallazgos/} que corresponda a su fase:
+
+\begin{verbatim}
+\subsubsection{Task-N: Título de la tarea}
+\label{hallazgo:task-N}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & YYYY-MM-DD \\\hline
+\textbf{Actividad} & A# del anteproyecto \\\hline
+\textbf{Artefactos} & \texttt{results/...}, \texttt{models/...} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.} Qué se buscaba verificar.
+\paragraph{Procedimiento.} Resumen reproducible (semilla, hiperparámetros,
+comando \texttt{uv run}).
+\paragraph{Resultados.} Tablas y figuras con \texttt{\textbackslash input}
+desde \texttt{results/figures/}.
+\paragraph{Interpretación.} Qué implica para la hipótesis de eficiencia de datos.
+\paragraph{Decisiones.} Cambios congelados (p.\,ej.\ $L=4$) o riesgos abiertos.
+\paragraph{Limitaciones.} Sesgos, supuestos, deuda técnica.
+\end{verbatim}
+
+\subsection{Mapeo de fragmentos por fase}
+
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fragmento} & \textbf{Tareas} \\\hline
+\texttt{h0\_fundamentos.tex} & 1, 2, 3, 4, 5, 6 \\\hline
+\texttt{h1\_arquitectura.tex} & 7, 8, 9, 10, 11 \\\hline
+\texttt{h2\_experimentacion.tex} & 12, 13 \\\hline
+\texttt{h3\_analisis.tex} & 14, 15, 16 \\\hline
+\end{tabularx}
+
+\section{Fase 0 — Fundamentos reproducibles y datos}
+\input{hallazgos/h0_fundamentos}
+
+\section{Fase 1 — Arquitectura híbrida CNN-VQC}
+\input{hallazgos/h1_arquitectura}
+
+\section{Fases 2 y 3 — Experimentación y análisis}
+\input{hallazgos/h2_experimentacion}
+\input{hallazgos/h3_analisis}
+
+\section{Síntesis de decisiones metodológicas}
+
+Esta sección consolida las decisiones congeladas a medida que avanza el proyecto:
+
+\begin{itemize}
+    \item \textbf{D1} — Orden de particiones y fracciones de escasez (tarea 6).
+    \item \textbf{D2} — Profundidad $L$ del VQC y presupuesto de cómputo (tarea 11).
+    \item \textbf{Go/no-go} — Criterio de viabilidad antes de la campaña experimental completa.
+\end{itemize}
+
+Las entradas se completarán conforme se ejecuten las tareas correspondientes.
+
+\bibliographystyle{apalike}
+\bibliography{../proyecto_de_grado/Referencias}
+\end{document}

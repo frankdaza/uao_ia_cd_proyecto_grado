@@ -1,11 +1,11 @@
 ---
 id: TASK-2
 title: Estructura LaTeX del trabajo de grado y bitácora de hallazgos
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:40'
-updated_date: '2026-08-17 00:40'
+updated_date: '2026-08-17 01:34'
 labels:
   - tesis
   - bitacora
@@ -21,7 +21,7 @@ documentation:
   - .cursor/rules/escritura-latex.mdc
 priority: high
 type: docs
-ordinal: 2000
+ordinal: 1000
 ---
 
 ## Description
@@ -69,19 +69,19 @@ flowchart LR
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Existe docs/trabajo_de_grado/ con preambulo_uao.tex, la bitácora, el esqueleto del trabajo final y las carpetas hallazgos/, capitulos/ y Figuras/
-- [ ] #2 preambulo_uao.tex reproduce fielmente el preámbulo UAO del anteproyecto (paquetes, geometría, natbib + apalike, listings y encabezados) y el anteproyecto original queda sin modificar
-- [ ] #3 La bitácora compila sin errores con la cadena pdflatex → bibtex → pdflatex y resuelve las citas contra ../proyecto_de_grado/Referencias.bib
-- [ ] #4 Los fragmentos hallazgos/h0_fundamentos.tex a h3_analisis.tex existen con comentario guía y se incluyen con \input desde la bitácora
-- [ ] #5 La plantilla estándar de hallazgo está documentada en la sección de convenciones e impone \label{hallazgo:task-N} para trazabilidad
-- [ ] #6 Un README.md en la carpeta explica el flujo bitácora → trabajo final y la política de bibliografía compartida
+- [x] #1 Existe docs/trabajo_de_grado/ con preambulo_uao.tex, la bitácora, el esqueleto del trabajo final y las carpetas hallazgos/, capitulos/ y Figuras/
+- [x] #2 preambulo_uao.tex reproduce fielmente el preámbulo UAO del anteproyecto (paquetes, geometría, natbib + apalike, listings y encabezados) y el anteproyecto original queda sin modificar
+- [x] #3 La bitácora compila sin errores con la cadena pdflatex → bibtex → pdflatex y resuelve las citas contra ../proyecto_de_grado/Referencias.bib
+- [x] #4 Los fragmentos hallazgos/h0_fundamentos.tex a h3_analisis.tex existen con comentario guía y se incluyen con \input desde la bitácora
+- [x] #5 La plantilla estándar de hallazgo está documentada en la sección de convenciones e impone \label{hallazgo:task-N} para trazabilidad
+- [x] #6 Un README.md en la carpeta explica el flujo bitácora → trabajo final y la política de bibliografía compartida
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Primera entrada real \label{hallazgo:task-2} que documenta la creación de la estructura
-- [ ] #2 Sin entradas BibTeX duplicadas: la bibliografía sigue siendo la del anteproyecto
-- [ ] #3 PDF generado verificado a la vista: índice, encabezados y citas resueltas
+- [x] #1 Primera entrada real \label{hallazgo:task-2} que documenta la creación de la estructura
+- [x] #2 Sin entradas BibTeX duplicadas: la bibliografía sigue siendo la del anteproyecto
+- [x] #3 PDF generado verificado a la vista: índice, encabezados y citas resueltas
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -160,6 +160,8 @@ pdflatex "Bitacora Metodologica de Hallazgos.tex"
 ```
 
 9. Añadir la primera entrada real, `\label{hallazgo:task-2}`, documentando la creación de la estructura.
+
+10. Registrar hallazgo retroactivo task-1 en h0_fundamentos.tex
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -175,4 +177,12 @@ pdflatex "Bitacora Metodologica de Hallazgos.tex"
 - Prohibido modificar `Anteproyecto - Frank Daza.tex`: el documento está entregado y su preámbulo se **copia**, no se refactoriza a un archivo compartido.
 
 **Convención de trazabilidad.** Una tarea sin `\label{hallazgo:task-N}` en el fragmento correspondiente se considera no documentada, aunque haya producido CSV en `results/`.
+
+Validación: pdflatex+bibtex+pdflatex×2 desde docs/trabajo_de_grado/ → PDF 6 páginas sin errores. Cita bergholm2018pennylane resuelta en .bbl. Hallazgos task-1 (retroactivo, mps, pérdida 1.54205954) y task-2 registrados. Anteproyecto sin cambios (git diff vacío).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Creada docs/trabajo_de_grado/ con preámbulo UAO copiado, bitácora compilable, esqueleto de tesis, fragmentos h0–h3, logo UAO y README. Verificado con cadena pdflatex→bibtex→pdflatex×2 (PDF 6 págs, citas y referencias cruzadas resueltas).
+<!-- SECTION:FINAL_SUMMARY:END -->
