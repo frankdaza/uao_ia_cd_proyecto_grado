@@ -1,11 +1,11 @@
 ---
 id: TASK-4
 title: 'Contrato de métricas, logging y artefactos'
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 00:48'
+updated_date: '2026-08-17 01:53'
 labels:
   - infra
   - bitacora
@@ -22,7 +22,7 @@ documentation:
   - AGENTS.md
 priority: high
 type: feature
-ordinal: 4000
+ordinal: 1000
 ---
 
 ## Description
@@ -68,23 +68,23 @@ flowchart LR
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 El esquema cubre todas las métricas exigidas por A9 (exactitud, F1 ponderado y macro, sensibilidad y especificidad por clase, tiempo de entrenamiento e inferencia) sin campos faltantes
-- [ ] #2 El historial por época registra pérdida y exactitud de entrenamiento y validación, suficiente para reconstruir las curvas de A11 sin reentrenar
-- [ ] #3 Cada fila queda identificada de forma única por la tupla (modelo, data_fraction, fold, semilla)
-- [ ] #4 Existe validación que rechaza registros incompletos o con métricas fuera de rango antes de escribir en disco, con una prueba que lo demuestra
-- [ ] #5 El mismo objeto de registro alimenta el CSV y wandb: el esquema está definido una sola vez en el código
-- [ ] #6 El CSV es tidy (una observación por fila) y statsmodels lo consume sin pivoteo manual
-- [ ] #7 Se registran metadatos de reproducibilidad: semilla, dispositivo, épocas, parámetros entrenables y SHA del commit
-- [ ] #8 El contrato especifica el protocolo de medición de tiempos (calentamiento y sincronización de dispositivo), no solo el nombre del campo
-- [ ] #9 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-4} y la tabla completa del esquema de columnas
+- [x] #1 El esquema cubre todas las métricas exigidas por A9 (exactitud, F1 ponderado y macro, sensibilidad y especificidad por clase, tiempo de entrenamiento e inferencia) sin campos faltantes
+- [x] #2 El historial por época registra pérdida y exactitud de entrenamiento y validación, suficiente para reconstruir las curvas de A11 sin reentrenar
+- [x] #3 Cada fila queda identificada de forma única por la tupla (modelo, data_fraction, fold, semilla)
+- [x] #4 Existe validación que rechaza registros incompletos o con métricas fuera de rango antes de escribir en disco, con una prueba que lo demuestra
+- [x] #5 El mismo objeto de registro alimenta el CSV y wandb: el esquema está definido una sola vez en el código
+- [x] #6 El CSV es tidy (una observación por fila) y statsmodels lo consume sin pivoteo manual
+- [x] #7 Se registran metadatos de reproducibilidad: semilla, dispositivo, épocas, parámetros entrenables y SHA del commit
+- [x] #8 El contrato especifica el protocolo de medición de tiempos (calentamiento y sincronización de dispositivo), no solo el nombre del campo
+- [x] #9 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-4} y la tabla completa del esquema de columnas
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #2 El Trainer no conoce el formato de salida: depende del registro, no del destino (DIP)
-- [ ] #3 Prueba automatizada del rechazo de registros inválidos
-- [ ] #4 Sin secretos de wandb en el código versionado
+- [x] #1 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #2 El Trainer no conoce el formato de salida: depende del registro, no del destino (DIP)
+- [x] #3 Prueba automatizada del rechazo de registros inválidos
+- [x] #4 Sin secretos de wandb en el código versionado
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -178,6 +178,8 @@ def aplanar(registro: RunRecord) -> dict[str, float | int | str]:
 6. Capturar `commit_sha` con `git rev-parse --short HEAD` y registrar si el árbol de trabajo está sucio.
 7. Escribir una prueba que construya un `RunRecord` incompleto y verifique que `validar()` levanta la excepción.
 8. Registrar el hallazgo en `hallazgos/h0_fundamentos.tex` con la tabla completa del esquema de columnas.
+
+9. Mejoras al plan original: timestamp en RunRecord; COLUMNAS_CSV como esquema único; historial en results/history/{modelo}_{fraccion}_f{fold}_s{semilla}.json; pytest en dev deps.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -194,4 +196,12 @@ def aplanar(registro: RunRecord) -> dict[str, float | int | str]:
 - No añadir columnas derivadas que se puedan recalcular (más allá de `brecha_g`, que A11 pide explícitamente): duplicar información derivada invita a inconsistencias entre el CSV y el análisis.
 
 **Regla de diseño.** El `Trainer` de task-8 **no** conoce el formato de salida: emite `RunRecord` y el *sink* decide destino. Así se cumple DIP y se puede añadir un destino nuevo sin tocar el bucle de entrenamiento.
+
+Implementado src/logging/{records,timing,sinks}.py con COLUMNAS_CSV, validación, aplanar() y sinks CSV/wandb/JSON. Historial: {modelo}_{fraccion}_f{fold}_s{semilla}.json. pytest: 15 passed.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Contrato de métricas TASK-4: RunRecord/EpochRecord validados, sinks CSV+wandb+JSON, protocolo de tiempos documentado, hallazgo en h0_fundamentos.tex. Verificado con uv run pytest tests/ -q (15 passed).
+<!-- SECTION:FINAL_SUMMARY:END -->

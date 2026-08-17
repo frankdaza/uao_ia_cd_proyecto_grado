@@ -44,6 +44,10 @@
 ## macOS:
 .DS_Store
 
+## Python:
+__pycache__/
+*.py[cod]
+
 ## Artefactos de experimentos (conservar estructura con .gitkeep):
 models/*
 !models/.gitkeep

@@ -158,6 +158,80 @@ compresión. La conversión a 3 canales y el redimensionado a $224\times224$ que
 para TASK-5.
 
 % --- Tareas pendientes en este fragmento ---
-% TASK-4: Contrato de métricas, logging y artefactos
 % TASK-5: Pipeline de preprocesamiento y aumento de datos (A5)
 % TASK-6: Protocolo de particiones: holdout, k-fold y fracciones (A7)
+
+\subsubsection{Task-4: Contrato de métricas, logging y artefactos}
+\label{hallazgo:task-4}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & Infraestructura (m-0) --- contrato de resultados \\\hline
+\textbf{Artefactos} & \texttt{src/logging/records.py}, \texttt{src/logging/sinks.py}, \texttt{src/logging/timing.py}, \texttt{tests/test\_records.py}, \texttt{tests/test\_sinks.py} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Definir \textbf{antes de entrenar} el esquema único de resultados del proyecto: una fila
+por corrida \texttt{(modelo, data\_fraction, fold, semilla)} con todas las métricas que
+exigen A9 y A10, más un historial por época en JSON para las curvas de A11. En problemas
+clínicos multiclase, la exactitud sola es insuficiente: deben reportarse sensibilidad y
+especificidad por clase~\cite{esteva2019guide}.
+
+\paragraph{Procedimiento.}
+Se implementaron las dataclasses congeladas \texttt{RunRecord} y \texttt{EpochRecord} con
+validación explícita (\texttt{validar()}), la función \texttt{aplanar()} que alimenta CSV
+y wandb desde el mismo objeto, y los \textit{sinks} de persistencia. El protocolo de
+tiempos exige descartar al menos 3 lotes de calentamiento, sincronizar el dispositivo
+(\texttt{cuda}/\texttt{mps}) antes y después de cada medición, y reportar la mediana de
+milisegundos por lote en inferencia. Verificación:
+\begin{verbatim}
+uv run pytest tests/ -q
+\end{verbatim}
+
+\paragraph{Resultados.}
+Esquema tidy de \texttt{results/experiments.csv} (una observación por fila):
+
+\begin{center}
+\small
+\begin{tabular}{llp{7.5cm}}\hline
+\textbf{Grupo} & \textbf{Columna} & \textbf{Descripción} \\\hline
+Identidad & \texttt{modelo} & Identificador del modelo (\texttt{hqcnn}, \texttt{efficientnet\_b0}, etc.) \\
+Identidad & \texttt{data\_fraction} & Fracción del entrenamiento usada \\
+Identidad & \texttt{fold} & Índice del fold estratificado \\
+Identidad & \texttt{semilla} & Semilla global de la corrida \\\hline
+Contexto & \texttt{dispositivo} & \texttt{cuda}, \texttt{mps} o \texttt{cpu} \\
+Contexto & \texttt{n\_train}, \texttt{n\_val} & Tamaños de particiones \\
+Contexto & \texttt{epocas} & Presupuesto de épocas \\
+Contexto & \texttt{n\_params\_entrenables} & Parámetros con gradiente \\
+Contexto & \texttt{n\_capas\_vqc} & Profundidad $L$ del VQC (\texttt{None} en clásicos) \\
+Contexto & \texttt{commit\_sha} & SHA corto del commit (\texttt{-dirty} si aplica) \\
+Contexto & \texttt{timestamp} & Marca temporal ISO 8601 de la corrida \\\hline
+Exactitud & \texttt{accuracy\_train}, \texttt{accuracy\_val} & Exactitud final \\
+Pérdida & \texttt{loss\_train}, \texttt{loss\_val} & Pérdida media final \\
+F1 (A9) & \texttt{f1\_val\_weighted}, \texttt{f1\_val\_macro} & F1 ponderado y macro \\
+Por clase & \texttt{sens\_*}, \texttt{spec\_*} & Sensibilidad y especificidad por clase \\
+Costo & \texttt{train\_time\_s}, \texttt{inference\_ms\_per\_batch} & Tiempos medidos \\
+Derivada & \texttt{brecha\_g} & $|Acc_{train} - Acc_{val}|$ (A11) \\\hline
+\end{tabular}
+\end{center}
+
+Historial por época en \texttt{results/history/\{modelo\}\_\{fraccion\}\_f\{fold\}\_s\{semilla\}.json}
+con campos \texttt{epoca}, \texttt{loss\_train}, \texttt{loss\_val}, \texttt{accuracy\_train},
+\texttt{accuracy\_val}. Pruebas automatizadas: \textbf{15 passed}.
+
+\paragraph{Interpretación.}
+El contrato convierte A9, A10 y A11 en consultas sobre datos ya recogidos. Si faltara
+un campo (p.\,ej.\ especificidad por clase), habría que repetir corridas cuyo gradiente
+se calcula por regla de cambio de parámetros. El \texttt{Trainer} (TASK-8) emitirá
+\texttt{RunRecord} sin conocer el formato de salida (DIP).
+
+\paragraph{Decisiones.}
+Orden canónico de clases: \texttt{glioma}, \texttt{meningioma}, \texttt{pituitary},
+\texttt{notumor} (alineado con TASK-9). Un solo esquema vía \texttt{aplanar()} para CSV
+y wandb. Cabecera CSV validada contra \texttt{COLUMNAS\_CSV}; escritura incompatible
+aborta en lugar de desalinear filas. Historial incluye \texttt{semilla} en el nombre
+para evitar colisiones futuras.
+
+\paragraph{Limitaciones.}
+El CSV en modo \textit{append} no es seguro ante escritura paralela; si se paraleliza la
+campaña, escribir un CSV por corrida y consolidar en TASK-14. \texttt{wandb.init()} queda
+fuera del \textit{sink}; el orquestador debe inicializar la sesión.
