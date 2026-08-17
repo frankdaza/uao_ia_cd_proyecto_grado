@@ -53,6 +53,8 @@ models/*
 !models/.gitkeep
 results/*
 !results/.gitkeep
+!results/splits.json
+!results/splits_summary.md
 !results/figures/
 results/figures/*
 !results/figures/.gitkeep

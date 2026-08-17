@@ -1,11 +1,11 @@
 ---
 id: TASK-6
 title: 'Protocolo de particiones: holdout, k-fold estratificado y fracciones (A7)'
-status: To Do
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 00:48'
-updated_date: '2026-08-17 00:48'
+updated_date: '2026-08-17 02:04'
 labels:
   - escasez
   - bitacora
@@ -24,7 +24,7 @@ documentation:
   - AGENTS.md
 priority: high
 type: feature
-ordinal: 6000
+ordinal: 1000
 ---
 
 ## Description
@@ -62,23 +62,23 @@ flowchart TB
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 results/splits.json contiene los índices de los 5 folds y, dentro de cada uno, los índices de entrenamiento para las fracciones 10, 25, 50 y 100 por ciento
-- [ ] #2 Los índices se leen de disco en tiempo de entrenamiento: ningún módulo remuestrea particiones durante una corrida
-- [ ] #3 El conjunto de validación de cada fold es idéntico en las cuatro fracciones y una prueba automatizada lo verifica
-- [ ] #4 Los subconjuntos de entrenamiento son anidados: el 10 por ciento está contenido en el 25, este en el 50 y este en el 100
-- [ ] #5 Cada subconjunto conserva la proporción de clases del conjunto completo dentro de una tolerancia declarada
-- [ ] #6 No existe intersección entre entrenamiento y validación en ningún fold ni en ninguna fracción
-- [ ] #7 Se documenta el conteo exacto de imágenes por clase para cada combinación de fold y fracción, verificando el piso del escenario del 10 por ciento
-- [ ] #8 El JSON guarda el hash del manifiesto usado y la carga falla si el manifiesto cambió
-- [ ] #9 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-6} que justifica la decisión D1 frente a la redacción literal de A8 e incluye el diagrama de particiones
+- [x] #1 results/splits.json contiene los índices de los 5 folds y, dentro de cada uno, los índices de entrenamiento para las fracciones 10, 25, 50 y 100 por ciento
+- [x] #2 Los índices se leen de disco en tiempo de entrenamiento: ningún módulo remuestrea particiones durante una corrida
+- [x] #3 El conjunto de validación de cada fold es idéntico en las cuatro fracciones y una prueba automatizada lo verifica
+- [x] #4 Los subconjuntos de entrenamiento son anidados: el 10 por ciento está contenido en el 25, este en el 50 y este en el 100
+- [x] #5 Cada subconjunto conserva la proporción de clases del conjunto completo dentro de una tolerancia declarada
+- [x] #6 No existe intersección entre entrenamiento y validación en ningún fold ni en ninguna fracción
+- [x] #7 Se documenta el conteo exacto de imágenes por clase para cada combinación de fold y fracción, verificando el piso del escenario del 10 por ciento
+- [x] #8 El JSON guarda el hash del manifiesto usado y la carga falla si el manifiesto cambió
+- [x] #9 Hallazgo registrado en hallazgos/h0_fundamentos.tex con \label{hallazgo:task-6} que justifica la decisión D1 frente a la redacción literal de A8 e incluye el diagrama de particiones
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 uv run python -m src.data.splits regenera splits.json idéntico bit a bit desde la semilla 42
-- [ ] #2 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
-- [ ] #3 La no independencia de los folds queda declarada como limitación para el análisis estadístico posterior
-- [ ] #4 Pruebas automatizadas de anidamiento, estratificación y disyunción entre particiones
+- [x] #1 uv run python -m src.data.splits regenera splits.json idéntico bit a bit desde la semilla 42
+- [x] #2 Tipado de Python 3.12 y docstrings NumPy en español latinoamericano
+- [x] #3 La no independencia de los folds queda declarada como limitación para el análisis estadístico posterior
+- [x] #4 Pruebas automatizadas de anidamiento, estratificación y disyunción entre particiones
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -179,4 +179,12 @@ uv run python -m src.data.splits
 - No usar `train_test_split` con `stratify=` como atajo para los folds: no garantiza cobertura completa del conjunto ni particiones disjuntas entre folds.
 
 **Piso metodológico.** Si al 10 % alguna clase queda por debajo de un mínimo razonable para estimar métricas por clase, la fracción más agresiva debe reconsiderarse y la decisión quedar escrita, en lugar de reportar sensibilidad calculada sobre un puñado de imágenes.
+
+Validación: uv run pytest tests/test_splits.py -q → 9 passed. splits.json SHA-256: 1b4225f8d61115818a5bc7cda9a6eb144812ec466fe0fad6c0c79b815d831345 (regeneración bit a bit verificada). manifest_hash: 30fb5b4334444b9d37924ac864d2cfc310347cdefb866ee23605214bbee129ca. Piso 10%: mín 130 img/clase/fold. Gitignore actualizado para versionar splits.json. BibTeX li2021cvstability añadido.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implementado src/data/splits.py con k-fold estratificado (D1), submuestreo anidado 10/25/50/100%, persistencia determinista en results/splits.json con validación de hash, 9 pruebas y hallazgo en h0_fundamentos.tex. Verificado con pytest y doble ejecución del CLI.
+<!-- SECTION:FINAL_SUMMARY:END -->
