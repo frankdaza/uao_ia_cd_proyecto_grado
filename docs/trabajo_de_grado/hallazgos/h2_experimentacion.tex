@@ -1,10 +1,5 @@
 % Fragmento: Fases 2 — Experimentación
 % Tareas asignadas: TASK-12, TASK-13
-% Plantilla: ver sección «Propósito y convenciones» de la bitácora.
-% Obligatorio: \label{hallazgo:task-N} por cada tarea documentada.
-
-% --- Tareas pendientes en este fragmento ---
-% TASK-13: Campaña experimental k-fold en escenarios de escasez (A8)
 
 \subsubsection{Task-12: Líneas base clásicas con el 100\% del conjunto (A6)}
 \label{hallazgo:task-12}
@@ -100,3 +95,81 @@ de EfficientNet-B0 o ResNet-50 con \textit{fine-tuning} completo. Los 5 folds co
 observaciones (TASK-6); la desviación estándar entre folds mide estabilidad de la partición,
 no error de muestreo independiente. El tiempo de inferencia de ResNet-50 es mayor por la
 mayor dimensión latente (2048 vs.\ 1280) y el costo del \textit{forward} congelado.
+
+\subsubsection{Task-13: Campaña experimental k-fold en escenarios de escasez (A8)}
+\label{hallazgo:task-13}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+\textbf{Fecha} & 2026-08-17 \\\hline
+\textbf{Actividad} & A8 --- Campaña factorial con validación cruzada (m-2) \\\hline
+\textbf{Artefactos} & \texttt{src/experiments/campana.py}, \texttt{tests/test\_campana.py}, \texttt{results/experiments.csv}, \texttt{results/campana\_estado.json}, \texttt{results/history/*.json}, \texttt{models/*.pt} \\\hline
+\end{tabularx}
+
+\paragraph{Objetivo.}
+Ejecutar el diseño factorial balanceado
+$\{\text{HQCNN}, \text{EfficientNet-B0}, \text{ResNet-50}\} \times \{10\%, 25\%, 50\%, 100\%\} \times 5$ folds
+$= 60$ celdas, reutilizando las 10 corridas al 100\,\% de TASK-12 sin reentrenarlas.
+La comparación es \textbf{pareada}: todas las celdas comparten \texttt{results/splits.json}
+y el mismo presupuesto de 15 épocas, condición necesaria para estimar la interacción
+\textit{modelo $\times$ fracción} en TASK-15~\cite{caro2022generalization,gupta2025systematic}.
+
+\paragraph{Diseño e implementación.}
+El orquestador \texttt{src/experiments/campana.py} delega el entrenamiento al \texttt{Trainer}
+(TASK-8), construye modelos vía \texttt{build\_model} (TASK-12) y congela
+$L = 6$ desde \texttt{results/selected\_hparams.json} (TASK-11).
+Dispositivos: baselines en \texttt{mps}; HQCNN en \texttt{cpu} por inestabilidad de
+\texttt{TorchLayer} + \texttt{parameter-shift} en MPS (Hallazgo~\ref{hallazgo:task-11}).
+La reanudabilidad compara la clave completa \texttt{(modelo, fracción, fold, semilla)}.
+El estado de ejecución se persiste en \texttt{results/campana\_estado.json}; las celdas
+fallidas se registran allí con motivo, no en el CSV oficial.
+Ejecución por bloques:
+\begin{verbatim}
+uv run python -m src.experiments.campana --fraccion 0.10
+uv run python -m src.experiments.campana --verificar
+uv run pytest tests/test_campana.py -q
+\end{verbatim}
+
+\paragraph{Estado de ejecución (parcial, tras sonda local).}
+\begin{center}
+\small
+\begin{tabular}{lrrrr}\hline
+\textbf{Estado} & \textbf{Celdas} & \textbf{Notas} \\\hline
+Completadas & 3 & Sonda al 10\,\%, fold 0, 1 época (3 modelos) \\
+Omitidas & 0 & --- \\
+Pendientes & 57 & Campaña completa en Colab \\
+Fallidas & 0 & --- \\
+Reutilizadas (TASK-12) & 10 & Baselines al 100\,\%, no reentrenadas \\\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Resultados de la sonda (10\,\%, fold 0, 1 época).}
+\begin{center}
+\small
+\begin{tabular}{lrrr}\hline
+\textbf{Modelo} & \textbf{Acc.\ val} & \textbf{Tiempo (s)} & \textbf{Dispositivo} \\\hline
+EfficientNet-B0 & 0.7192 & 33.3 & mps \\
+ResNet-50 & 0.6322 & 35.4 & mps \\
+HQCNN ($L=6$) & 0.3908 & 388.9 & cpu \\\hline
+\end{tabular}
+\end{center}
+
+Pruebas automatizadas: \textbf{10 passed} (\texttt{test\_campana.py}).
+Trece filas en \texttt{experiments.csv} (10 baselines al 100\,\% + 3 sonda al 10\,\%).
+
+\paragraph{Costo de cómputo.}
+Acumulado parcial: 2.44\,h reales frente a 389.41\,h estimadas en TASK-11
+(desviación $-99.4\,\%$ respecto a la extrapolación conservadora de 60 celdas completas).
+La sonda confirma que el HQCNN en CPU consume $\sim$12$\times$ más tiempo por época que
+EfficientNet-B0 en MPS; la campaña completa se ejecutará en Colab (\texttt{cuda}) por bloques
+de fracción, dejando HQCNN al 100\,\% al final.
+
+\paragraph{Decisiones.}
+Orden de ejecución: fracciones crecientes; HQCNN al 100\,\% al cierre del bloque.
+Validación cruzada estratificada de 5 folds: la varianza entre folds mide estabilidad de la
+partición, no error de muestreo independiente~\cite{li2021cvstability} (limitación declarada
+desde TASK-6).
+
+\paragraph{Limitaciones.}
+La campaña no está completa (57/60 celdas pendientes). Los resultados de la sonda (1 época)
+no tienen validez inferencial; solo calibran tiempos y el pipeline de persistencia.
+Los AC de integridad (60 filas, historial completo) se verificarán con
+\texttt{--verificar} al terminar la campaña en Colab.

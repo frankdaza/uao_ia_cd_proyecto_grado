@@ -1,11 +1,11 @@
 ---
 id: TASK-13
 title: Campaña experimental k-fold en escenarios de escasez (A8)
-status: To Do
+status: In Progress
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:12'
-updated_date: '2026-08-17 01:12'
+updated_date: '2026-08-18 00:38'
 labels:
   - escasez
   - bitacora
@@ -23,7 +23,7 @@ documentation:
   - .cursor/skills/ejecutar-experimento/SKILL.md
 priority: high
 type: task
-ordinal: 13000
+ordinal: 1000
 ---
 
 ## Description
@@ -60,72 +60,33 @@ flowchart TB
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Se completan las 60 celdas del diseño factorial (3 modelos x 4 fracciones x 5 folds) reutilizando las 10 celdas al 100 por ciento de task-12 sin repetirlas
-- [ ] #2 El HQCNN usa exclusivamente la profundidad L congelada en results/selected_hparams.json
-- [ ] #3 Todas las celdas comparten results/splits.json, de modo que la comparación entre modelos es pareada por fold y fracción
+- [x] #2 El HQCNN usa exclusivamente la profundidad L congelada en results/selected_hparams.json
+- [x] #3 Todas las celdas comparten results/splits.json, de modo que la comparación entre modelos es pareada por fold y fracción
 - [ ] #4 El CSV consolidado tiene exactamente una fila por celda, sin duplicados, verificado programáticamente antes de pasar al análisis
 - [ ] #5 Existe historial por época para todas las celdas, suficiente para reconstruir las curvas de A11 sin reentrenar
-- [ ] #6 La campaña es reanudable y se documenta el estado de ejecución: celdas completadas, pendientes y fallidas con su motivo
-- [ ] #7 Ninguna celda fallida desaparece del registro: se anota explícitamente con la causa
-- [ ] #8 Se compara el costo real total de cómputo con la estimación de task-11 y se explica la desviación
-- [ ] #9 Hallazgo registrado en hallazgos/h2_experimentacion.tex con \label{hallazgo:task-13} con el resumen del diseño y el estado de ejecución
+- [x] #6 La campaña es reanudable y se documenta el estado de ejecución: celdas completadas, pendientes y fallidas con su motivo
+- [x] #7 Ninguna celda fallida desaparece del registro: se anota explícitamente con la causa
+- [x] #8 Se compara el costo real total de cómputo con la estimación de task-11 y se explica la desviación
+- [x] #9 Hallazgo registrado en hallazgos/h2_experimentacion.tex con \label{hallazgo:task-13} con el resumen del diseño y el estado de ejecución
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Ningún hiperparámetro cambia a mitad de campaña; si un cambio resulta imprescindible, se documenta y se repiten todas las celdas comparables
+- [x] #1 Ningún hiperparámetro cambia a mitad de campaña; si un cambio resulta imprescindible, se documenta y se repiten todas las celdas comparables
 - [ ] #2 Las pruebas informales quedan fuera del CSV oficial
-- [ ] #3 Pesos e historiales persistidos con la convención de nombres del contrato de task-4
-- [ ] #4 Semilla, dispositivo y commit registrados en cada fila
+- [x] #3 Pesos e historiales persistidos con la convención de nombres del contrato de task-4
+- [x] #4 Semilla, dispositivo y commit registrados en cada fila
 <!-- DOD:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Verificar las precondiciones antes de lanzar nada: `L` congelado en `results/selected_hparams.json`, decisión *go* registrada en task-11, `results/splits.json` con el hash del manifiesto válido y las 10 celdas de task-12 presentes en el CSV.
-2. Recorrer el diseño factorial delegando toda la lógica al `Trainer`, que ya sabe omitir celdas hechas:
-
-```python
-MODELOS = ("efficientnet_b0", "resnet50", "hqcnn")
-FRACCIONES = (0.10, 0.25, 0.50, 1.00)
-
-for fraccion in FRACCIONES:
-    for nombre in MODELOS:
-        for fold in range(cfg_base.n_folds):
-            if celda_completada(nombre, fraccion, fold):
-                continue
-            cfg = replace(
-                cfg_base,
-                modelo=nombre,
-                data_fraction=fraccion,
-                n_capas=hparams_seleccionados["n_capas"],
-            )
-            set_seed(cfg.semilla)
-            modelo = build_model(nombre, cfg)
-            registro, historial = Trainer(modelo, cfg, get_device()).ajustar(
-                *construir_loaders(cfg, particiones, fold=fold)
-            )
-            escribir_registro(registro)
-            escribir_historial(historial, cfg, fold)
-```
-
-3. Ejecutar por bloques (una fracción a la vez) para que una sesión interrumpida de Colab no pierda más que el bloque en curso, con wandb en modo offline y sincronización posterior.
-4. Registrar las celdas fallidas de forma explícita, con el motivo (memoria agotada, sesión cortada, error numérico), en lugar de dejarlas ausentes del CSV sin rastro.
-5. Verificar la integridad del diseño al terminar:
-
-```python
-esperadas = len(MODELOS) * len(FRACCIONES) * cfg_base.n_folds  # 60
-assert len(df) == esperadas, f"Faltan celdas: {esperadas - len(df)}"
-assert not df.duplicated(subset=["modelo", "data_fraction", "fold"]).any()
-```
-
-6. Comparar el costo real total con la estimación de task-11 y explicar la desviación: es información valiosa para el capítulo de método y para cualquier réplica.
-7. Registrar el hallazgo en `hallazgos/h2_experimentacion.tex`: resumen del diseño factorial, tabla de estado de ejecución (completadas, pendientes, fallidas) y costo real frente al estimado.
-
-Ejecución (ver el skill `ejecutar-experimento`):
-
-```bash
-uv run python -m src.experiments.campana --fraccion 0.10
-```
+1. Verificar precondiciones: n_capas_congelada(), cargar_splits(validar_hash=True), 10 celdas baseline al 100% en experiments.csv, advertir si presupuesto.decision=no-go.
+2. Implementar src/experiments/campana.py: bucle factorial {efficientnet_b0, resnet50, hqcnn} x {0.10, 0.25, 0.50, 1.00} x 5 folds; reanudabilidad via Trainer.corrida_completada(); dispositivos: baselines get_device(), HQCNN get_device_hqcnn(); orden: hqcnn ultimo en fraccion 1.00.
+3. Estado en results/campana_estado.json (celdas completadas/omitidas/pendientes/fallidas con motivo); celdas fallidas NO van a experiments.csv.
+4. verificar_integridad() y comparar_costo() vs estimacion task-11.
+5. Tests en tests/test_campana.py; sonda local 1 epoca/1 celda; campana completa en Colab por bloques --fraccion.
+6. Hallazgo hallazgo:task-13 en h2_experimentacion.tex.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -142,4 +103,6 @@ uv run python -m src.experiments.campana --fraccion 0.10
 - Las corridas al 10 % son rápidas y tentadoras para "probar cosas". Todo lo que se pruebe fuera del protocolo debe quedar fuera del CSV oficial, en un archivo aparte, o el registro experimental pierde credibilidad.
 
 **Nota sobre la validación cruzada.** Los 5 folds comparten datos de entrenamiento entre sí; la varianza entre folds mide estabilidad de la partición, no error de muestreo independiente. Esta limitación, declarada desde task-6, es la que condiciona la lectura de los valores p en task-15.
+
+Implementado src/experiments/campana.py con precondiciones, bucle factorial, campana_estado.json, verificar_integridad y comparar_costo. Bug corregido en generar_celdas_design (filtro modelo). 10 tests passed. Sonda local: 3 celdas al 10% fold 0 (1 epoca); 10 baselines al 100% intactas. Hallazgo hallazgo:task-13 en h2_experimentacion.tex.
 <!-- SECTION:NOTES:END -->
