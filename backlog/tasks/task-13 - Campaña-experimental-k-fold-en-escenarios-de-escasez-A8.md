@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:12'
-updated_date: '2026-08-18 01:55'
+updated_date: '2026-08-18 03:59'
 labels:
   - escasez
   - bitacora
@@ -71,13 +71,13 @@ flowchart TB
 - [x] #7 Ninguna celda fallida desaparece del registro: se anota explícitamente con la causa
 - [x] #8 Se compara el costo real total de cómputo con la estimación de task-11 y se explica la desviación
 - [x] #9 Hallazgo registrado en hallazgos/h2_experimentacion.tex con \label{hallazgo:task-13} con el resumen del diseño y el estado de ejecución
-- [ ] #10 experiments.csv contiene únicamente celdas ejecutadas en CUDA: las corridas MPS de task-12 y la sonda local quedan archivadas fuera del CSV oficial y referenciadas en la bitácora
+- [x] #10 experiments.csv contiene únicamente celdas ejecutadas en CUDA: las corridas MPS de task-12 y la sonda local quedan archivadas fuera del CSV oficial y referenciadas en la bitácora
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [x] #1 Ningún hiperparámetro cambia a mitad de campaña; si un cambio resulta imprescindible, se documenta y se repiten todas las celdas comparables
-- [ ] #2 Las pruebas informales quedan fuera del CSV oficial
+- [x] #2 Las pruebas informales quedan fuera del CSV oficial
 - [x] #3 Pesos e historiales persistidos con la convención de nombres del contrato de task-4
 - [x] #4 Semilla, dispositivo y commit registrados en cada fila
 - [ ] #5 Las 60 filas del CSV registran dispositivo=cuda: ninguna celda del análisis proviene de mps ni de cpu
@@ -115,4 +115,6 @@ Implementado src/experiments/campana.py con precondiciones, bucle factorial, cam
 **Cambio de runtime (decisión D3).** La campaña deja de ejecutarse en el equipo local y pasa íntegramente a Colab Pro+ con GPU CUDA, entorno entregado por TASK-20. Con ello desaparece la reutilización de las 10 celdas al 100 % de task-12: esas corridas están en `mps` y mezclarlas con celdas en `cuda` confundiría el hardware con el efecto del modelo en las métricas de costo que exige A9 (tiempo de entrenamiento y latencia de inferencia). Se reejecutan en CUDA por ~1.5–3 h de GPU, frente a las ~130 h del bloque HQCNN.
 
 Las corridas MPS y las 3 filas de la sonda local de 1 época no se borran: TASK-20 las archiva en `results/historico_mps.csv`, `results/history_mps/` y `results/pruebas_informales.csv`, y quedan referenciadas en la bitácora. Dejarlas en `experiments.csv` habría hecho que `Trainer.corrida_completada()` las omitiera por reanudabilidad, mezclando corridas de 1 época con corridas de 15 en la ANOVA de task-15.
+
+**Preparación Colab 2026-08-18 (vía TASK-20).** Entorno CUDA verificado; `experiments.csv` vacío tras archivado; corridas MPS en `historico_mps.csv` y sonda local en `pruebas_informales.csv`; 60 celdas en `pendiente` en `campana_estado.json`. Sonda CUDA HQCNN (paso 9) en ejecución. **Pendiente:** 60 celdas de campaña, verificación `--verificar`, cierre de hallazgo con estado final.
 <!-- SECTION:NOTES:END -->

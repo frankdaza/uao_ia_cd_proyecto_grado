@@ -1,7 +1,7 @@
 {
   "n_capas": 6,
   "criterio_seleccion": "Mayor F1 macro de validacion al final del presupuesto reducido; ante diferencias <= 0.02, preferir la L mas baja por costo y entrenabilidad.",
-  "fecha": "2026-08-17T19:21:14.396975+00:00",
+  "fecha": "2026-08-18T04:28:00+00:00",
   "commit_sha": "5153d2c-dirty",
   "protocolo_ablacion": {
     "fold": 0,
@@ -19,13 +19,14 @@
     "nota_metodologica": "Decision de diseno instrumentada; no tiene significancia estadistica (no A8)."
   },
   "presupuesto": {
-    "segundos_por_epoca_referencia": 841.9716935749996,
+    "segundos_por_epoca_referencia": 1032.3,
     "L_referencia": 6,
-    "horas_campana_estimadas": 389.41,
-    "horas_hqcnn_solo": 129.8,
+    "horas_campana_estimadas": 1193.6,
+    "horas_hqcnn_solo": 397.87,
     "dispositivo_ablacion": "cpu",
     "dispositivo_campana_previsto": "colab_cuda",
-    "sonda_1_epoca_pendiente": true,
+    "dispositivo_campana_real": "cuda (Tesla T4, Colab Pro+)",
+    "sonda_1_epoca_pendiente": false,
     "n_celdas": 60,
     "umbral_horas": 72.0,
     "decision": "no-go",
@@ -49,6 +50,6 @@
       }
     ],
     "mitigacion_adoptada": null,
-    "notas": "En cpu: HQCNN solo ~129.8 h, conservadora (3 modelos) ~389.4 h > 72 h. No se recortan epocas sin evidencia. Go condicionado a sonda de 1 epoca en colab_cuda antes de TASK-13; D2 (HQCNN al 100 %) se confirma tras re-extrapolar."
+    "notas": "Sonda Colab (Tesla T4): HQCNN L=6 al 10% fold 0, 1 epoca = 1032.3 s/epoca (0.38x frente a 388.9 s en cpu local). HQCNN solo ~397.9 h; extrapolacion conservadora (3 modelos) ~1193.6 h > 72 h. El simulador default.qubit corre en CPU; TorchLayer en cuda implica copias por muestra. decision no-go confirmada; sonda cerrada. No se recortan epocas, folds ni celdas."
   }
 }

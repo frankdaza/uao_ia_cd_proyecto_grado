@@ -1,11 +1,11 @@
 ---
 id: TASK-20
 title: Entorno canónico de ejecución en Google Colab Pro+ y sonda CUDA
-status: In Progress
+status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-18 01:53'
-updated_date: '2026-08-18 02:10'
+updated_date: '2026-08-18 04:47'
 labels:
   - infra
   - colab
@@ -69,25 +69,25 @@ flowchart TB
 <!-- AC:BEGIN -->
 - [x] #1 Existe notebooks/colab_campana.ipynb que importa src.experiments.campana y no redefine modelos, bucles de entrenamiento ni particiones
 - [x] #2 Ninguna ruta de Google Drive queda incrustada en src/: el contrato de rutas vive en el notebook y src/ deriva todo de ExperimentConfig con pathlib
-- [ ] #3 results/ y models/ persisten en Drive, de modo que un corte de sesion no pierde experiments.csv, los historiales ni los pesos
-- [ ] #4 El entorno instala los pins del README (PyTorch 2.9.1 cu128, PennyLane 0.45.1) y verifica explicitamente que torch.cuda.is_available() sea verdadero antes de entrenar
-- [ ] #5 splits.json se restaura y se valida por hash sin regenerarse, y selected_hparams.json conserva L=6 congelada de TASK-11
+- [x] #3 results/ y models/ persisten en Drive, de modo que un corte de sesion no pierde experiments.csv, los historiales ni los pesos
+- [x] #4 El entorno instala los pins del README (PyTorch 2.9.1 cu128, PennyLane 0.45.1) y verifica explicitamente que torch.cuda.is_available() sea verdadero antes de entrenar
+- [x] #5 splits.json se restaura y se valida por hash sin regenerarse, y selected_hparams.json conserva L=6 congelada de TASK-11
 - [x] #6 Las 10 corridas MPS al 100 por ciento quedan archivadas en results/historico_mps.csv con sus historiales en results/history_mps/ antes de cualquier reejecucion: ninguna evidencia se pierde ni se sobrescribe en silencio
 - [x] #7 Las 3 filas de la sonda local de 1 epoca quedan archivadas en results/pruebas_informales.csv y fuera de experiments.csv
 - [x] #8 campana_estado.json vuelve a marcar como pendiente toda celda cuyas filas fueron archivadas, de modo que la campana no las omita por reanudabilidad
 - [x] #9 La CLI de campana permite arrancar sin lineas base previas en el CSV sin desactivar la validacion de L congelada ni el hash de splits.json
-- [ ] #10 Se ejecuta la sonda de 1 epoca del HQCNN en CUDA y se registra el tiempo por epoca medido, fuera del CSV oficial
-- [ ] #11 selected_hparams.json se actualiza con la re-extrapolacion en CUDA: horas estimadas, presupuesto.decision, sonda_1_epoca_pendiente en falso y el dispositivo real de campana
-- [ ] #12 wandb opera con WANDB_MODE=offline y queda documentado el procedimiento de sincronizacion posterior
+- [x] #10 Se ejecuta la sonda de 1 epoca del HQCNN en CUDA y se registra el tiempo por epoca medido, fuera del CSV oficial
+- [x] #11 selected_hparams.json se actualiza con la re-extrapolacion en CUDA: horas estimadas, presupuesto.decision, sonda_1_epoca_pendiente en falso y el dispositivo real de campana
+- [x] #12 wandb opera con WANDB_MODE=offline y queda documentado el procedimiento de sincronizacion posterior
 - [x] #13 El skill ejecutar-experimento documenta el procedimiento de Colab Pro plus, que hoy solo cubre ejecucion local con UV
-- [ ] #14 Hallazgo registrado en hallazgos/h2_experimentacion.tex con label hallazgo:task-20 siguiendo la plantilla estandar de la bitacora
+- [x] #14 Hallazgo registrado en hallazgos/h2_experimentacion.tex con label hallazgo:task-20 siguiendo la plantilla estandar de la bitacora
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Sin pip fuera de la excepcion documentada de Colab: en local sigue rigiendo UV
-- [ ] #2 Ninguna corrida experimental se elimina: todo lo retirado de experiments.csv queda archivado y referenciado en la bitacora
-- [ ] #3 No se recortan epocas, folds ni celdas del diseno factorial: las mitigaciones rechazadas en TASK-11 siguen rechazadas
+- [x] #1 Sin pip fuera de la excepcion documentada de Colab: en local sigue rigiendo UV
+- [x] #2 Ninguna corrida experimental se elimina: todo lo retirado de experiments.csv queda archivado y referenciado en la bitacora
+- [x] #3 No se recortan epocas, folds ni celdas del diseno factorial: las mitigaciones rechazadas en TASK-11 siguen rechazadas
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -126,4 +126,14 @@ Pruebas: 118 passed en la suite completa, con 4 casos nuevos en `tests/test_camp
 **Trampa de Drive.** La celda que enlaza `results/` y `models/` siembra desde el repositorio **solo** si la carpeta de Drive está vacía. Sin ese guardia, reejecutar el cuaderno en una sesión posterior sobrescribiría con el CSV vacío del repositorio las celdas ya entrenadas.
 
 **Versionado del CSV.** Se agregó `!results/experiments.csv` a las excepciones del `.gitignore`: son 60 filas, es la evidencia de R3 y de ella dependen TASK-14, TASK-15 y TASK-16. Queda por decidir si `results/campana_estado.json` merece el mismo trato, ya que la tabla de estado de ejecución del hallazgo `hallazgo:task-13` se construye a partir de él.
+
+**Sesión Colab 2026-08-18 (pasos 1–8).** GPU Tesla T4 15 GB (driver 530.82.07). Rutas Drive: `UAO/.../Proyecto de Grado/` con `brain_tumor_mri` y `tesis_hqcnn`. Pins verificados: torch 2.9.1+cu128, pennylane 0.45.1, CUDA disponible. Dataset 7023/7023 hashes OK. Paso 6: `results/` y `models/` sembrados en Drive y enlazados por symlink. Paso 7: `WANDB_MODE=offline`. Paso 8: archivado idempotente (0 filas en CSV). **Pendiente:** paso 9 sonda HQCNN, actualizar `selected_hparams.json`, cerrar hallazgo con números medidos (AC 10, 11, 14).
+
+**Sonda CUDA cerrada (2026-08-18).** HQCNN L=6 al 10% fold 0: 1032.3 s/epoca en Tesla T4 (0.38x vs 388.9 s cpu local). Re-extrapolacion: HQCNN ~397.9 h, conservadora ~1193.6 h. `selected_hparams.json` actualizado: `sonda_1_epoca_pendiente=false`, `decision=no-go`, `dispositivo_campana_real=cuda (Tesla T4, Colab Pro+)`. Pendiente: hallazgo AC #14.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Entorno Colab Pro+ verificado (Tesla T4, pins README, Drive, wandb offline). Sonda HQCNN: 1032.3 s/epoca (0.38x vs CPU local). selected_hparams.json actualizado con no-go (~1193.6 h conservadora). Hallazgo hallazgo:task-20 cerrado en h2_experimentacion.tex. Verificado en sesion Colab 2026-08-18 y artefactos en results/.
+<!-- SECTION:FINAL_SUMMARY:END -->

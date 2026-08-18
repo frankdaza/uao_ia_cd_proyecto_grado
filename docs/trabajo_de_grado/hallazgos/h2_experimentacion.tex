@@ -187,10 +187,14 @@ Estas tres corridas validan el flujo de persistencia, no el diseño experimental
 
 \paragraph{Costo de cómputo.}
 La sonda local midió el HQCNN en CPU a $\sim$12$\times$ el tiempo por época de EfficientNet-B0
-en MPS, lo que confirma que el bloque híbrido domina el presupuesto. La estimación vigente de
-TASK-11 (389.41\,h para 60 celdas, extrapolación conservadora en CPU) se sustituye por la
-re-extrapolación en \texttt{cuda} de TASK-20; el costo real acumulado se compara contra ambas
-con \texttt{comparar\_costo} y se registra aquí al cerrar cada bloque.
+en MPS, lo que confirma que el bloque híbrido domina el presupuesto. La estimación de TASK-11
+(389.41\,h conservadora en CPU local) queda sustituida por la re-extrapolación en Colab de
+TASK-20 (Hallazgo~\ref{hallazgo:task-20}): HQCNN solo $\sim$397.9\,h y conservadora
+$\sim$1193.6\,h en Tesla T4, ambas por encima del umbral de 72\,h y con
+\texttt{decision=no-go} en \texttt{selected\_hparams.json}. La campaña factorial no se inicia
+hasta una decisión metodológica explícita que no recorte épocas, folds ni celdas. El costo real
+acumulado, si procede, se compara contra ambas estimaciones con \texttt{comparar\_costo} y se
+registra aquí al cerrar cada bloque.
 
 \paragraph{Decisiones.}
 Runtime único \texttt{cuda} en Colab Pro+ y homogeneidad de hardware en las sesenta celdas
@@ -202,17 +206,19 @@ partición, no error de muestreo independiente~\cite{li2021cvstability} (limitac
 desde TASK-6).
 
 \paragraph{Limitaciones.}
-La campaña no está ejecutada: las 60 celdas quedan pendientes tras el traslado a Colab Pro+.
-Los AC de integridad (60 filas sin duplicados, historial completo, \texttt{dispositivo=cuda})
-se verificarán con \texttt{--verificar} al terminar. La reejecución en GPU de las diez celdas
-al 100\,\% de TASK-12 implica que sus métricas de exactitud pueden diferir levemente de las
-registradas en \texttt{mps} por no determinismo entre dispositivos; la comparación entre ambas
-sirve como control de sanidad, no como réplica bit a bit.
+La campaña no está ejecutada: las 60 celdas quedan pendientes tras cerrar la sonda de
+TASK-20 con \texttt{decision=no-go} ($\sim$1193.6\,h extrapoladas en Tesla T4 frente a un
+umbral de 72\,h). Los AC de integridad (60 filas sin duplicados, historial completo,
+\texttt{dispositivo=cuda}) se verificarán con \texttt{--verificar} al terminar, si la campaña
+procede. La reejecución en GPU de las diez celdas al 100\,\% de TASK-12 implica que sus
+métricas de exactitud pueden diferir levemente de las registradas en \texttt{mps} por no
+determinismo entre dispositivos; la comparación entre ambas sirve como control de sanidad, no
+como réplica bit a bit.
 
 \subsubsection{Task-20: Entorno canónico de ejecución en Google Colab Pro+ y sonda CUDA}
 \label{hallazgo:task-20}
 \begin{tabularx}{\textwidth}{|l|X|}\hline
-\textbf{Fecha} & 2026-08-17 (en curso) \\\hline
+\textbf{Fecha} & 2026-08-18 \\\hline
 \textbf{Actividad} & Soporte a A8; recurso declarado en el anteproyecto (Colab Pro+) \\\hline
 \textbf{Artefactos} & \texttt{notebooks/colab\_campana.ipynb}, \texttt{results/historico\_mps.csv}, \texttt{results/history\_mps/}, \texttt{results/pruebas\_informales.csv}, \texttt{results/selected\_hparams.json}, \texttt{.cursor/skills/ejecutar-experimento/SKILL.md} \\\hline
 \end{tabularx}
@@ -238,37 +244,61 @@ corridas cuando la sesión se interrumpe. Antes de cualquier entrenamiento se ar
 filas en \texttt{mps} y las tres de la sonda local, y se reponen esas celdas como
 \texttt{pendiente} en \texttt{results/campana\_estado.json}. GPU prevista: \texttt{T4}.
 
-\paragraph{Resultados (parciales).}
+\paragraph{Resultados.}
 Higiene del registro ejecutada: \texttt{archivar\_corridas\_no\_cuda} retiró 10 corridas
-heterogéneas (líneas base al 100\,\% en \texttt{mps}) y 3 pruebas informales (sonda de 1 época),
-movió sus 13 historiales a \texttt{results/history\_mps/} y dejó \texttt{experiments.csv} con
-cero filas y las 60 celdas en \texttt{pendiente}. Los historiales de la ablación de $L$
+heterogéneas (líneas base al 100\,\% en \texttt{mps}) y 3 pruebas informales (sonda local de
+1 época), movió sus 13 historiales a \texttt{results/history\_mps/} y dejó \texttt{experiments.csv}
+con cero filas y las 60 celdas en \texttt{pendiente}. Los historiales de la ablación de $L$
 (TASK-11) permanecen en \texttt{results/history/} por no pertenecer al CSV de la campaña.
 La CLI expone \texttt{--archivar-no-cuda} y \texttt{--sin-baselines-previas}; esta última
 permite arrancar sin las líneas base en el CSV sin relajar la validación de $L$ ni el hash de
 \texttt{splits.json}. Suite de pruebas: \textbf{118 passed}, con cuatro casos nuevos que cubren
 el archivado, la reposición de celdas a \texttt{pendiente} y la idempotencia.
 
-\textit{Pendiente de ejecución en Colab.} Al completarse se registran aquí: verificación de
-\texttt{torch.cuda.is\_available()} y modelo de GPU asignada, segundos por época del HQCNN
-($L=6$) al 10\,\% en \texttt{cuda}, factor de aceleración frente a los 388.9\,s medidos en CPU,
-horas re-extrapoladas para las 60 celdas y la decisión de presupuesto resultante en
-\texttt{results/selected\_hparams.json}.
+Sesión Colab Pro+ (2026-08-18): runtime verificado con PyTorch 2.9.1+cu128 y PennyLane 0.45.1;
+\texttt{torch.cuda.is\_available()} verdadero; GPU asignada Tesla T4 (15\,GiB). Dataset auditado
+7023/7023 hashes OK (TASK-3). \texttt{results/} y \texttt{models/} persistidos en Drive;
+\texttt{WANDB\_MODE=offline}. Sonda de 1 época del HQCNN ($L=6$, 10\,\%, fold 0) ejecutada con
+\texttt{--sin-baselines-previas}; la corrida se archivó en \texttt{pruebas\_informales.csv} y el
+CSV oficial quedó vacío.
+
+\begin{center}
+\small
+\begin{tabular}{lrrrr}\hline
+\textbf{Medición} & \textbf{Acc.\ val} & \textbf{Tiempo (s/ep)} & \textbf{Dispositivo} & \textbf{Notas} \\\hline
+Sonda local (TASK-13) & 0.3908 & 388.9 & cpu (macOS) & Prueba informal \\
+Sonda Colab (TASK-20) & 0.3908 & 1032.3 & cuda (Tesla T4) & Prueba informal \\\hline
+\end{tabular}
+\end{center}
+
+Re-extrapolación con \texttt{estimar\_horas\_campana} a partir de 1032.3\,s/ep (referencia al
+10\,\%): bloque HQCNN $\sim$397.9\,h; extrapolación conservadora (tres modelos al costo del
+HQCNN) $\sim$1193.6\,h. Factor frente a la sonda local en CPU: $0.38\times$ (Colab más lento,
+no más rápido). \texttt{results/selected\_hparams.json} actualizado:
+\texttt{sonda\_1\_epoca\_pendiente=false}, \texttt{dispositivo\_campana\_real=cuda (Tesla T4,
+Colab Pro+)}, \texttt{decision=no-go} (umbral 72\,h).
 
 \paragraph{Interpretación.}
 El cuello de botella del proyecto no es la CNN sino la simulación del VQC con
-\texttt{parameter-shift} sobre \texttt{default.qubit}, que se evalúa en CPU aunque el resto del
-grafo esté en GPU. Por eso la elección de acelerador se toma por costo-beneficio y no por
-potencia nominal: una GPU de gama alta acelera el \textit{backbone} congelado y las líneas base,
-pero no el término dominante del costo. La sonda es lo que permite decidir con una medición en
-lugar de una expectativa.
+\texttt{parameter-shift} sobre \texttt{default.qubit}, que se evalúa en CPU aunque el grafo
+PyTorch esté en \texttt{cuda}. En Colab, el \texttt{forward} del HQCNN invoca el
+\texttt{TorchLayer} muestra a muestra (PennyLane no admite \textit{batching} con
+\texttt{parameter-shift}), lo que impone copias GPU$\leftrightarrow$CPU por muestra mientras el
+simulador cuántico corre en la CPU del \textit{runtime}, típicamente más débil que la del equipo
+local. Por eso la Tesla T4 no acelera el bloque híbrido: la sonda midió $2.65\times$ más tiempo
+por época que en CPU local (1032.3\,s frente a 388.9\,s), y la extrapolación conservadora sube de
+389.4\,h a 1193.6\,h. La sonda cumple su función: sustituir la expectativa de TASK-11 por una
+medición en el entorno declarado y confirmar que el umbral de viabilidad no se alcanza sin
+recortar el diseño factorial.
 
 \paragraph{Decisiones.}
 Decisión D3 de la síntesis metodológica: Colab Pro+ con \texttt{cuda} como runtime único de
-entrenamiento; las sesenta celdas en el mismo dispositivo; corridas en \texttt{mps} y sonda local
-archivadas, no eliminadas. El análisis posterior (TASK-14, TASK-15, TASK-16) se ejecuta en CPU
-para no consumir unidades de cómputo. No se recortan épocas, folds ni celdas: las mitigaciones
-evaluadas y rechazadas en TASK-11 siguen rechazadas.
+entrenamiento; las sesenta celdas en el mismo dispositivo; corridas en \texttt{mps} y sondas
+informales archivadas, no eliminadas. La compuerta de presupuesto de TASK-11 queda cerrada con
+\texttt{decision=no-go}: la campaña factorial (TASK-13) no se lanza hasta una decisión
+metodológica explícita que no recorte épocas, folds ni celdas ni reactive mitigaciones ya
+rechazadas. El análisis posterior (TASK-14, TASK-15, TASK-16) se ejecuta en CPU para no consumir
+unidades de cómputo.
 
 \paragraph{Limitaciones.}
 Colab no garantiza el mismo modelo de GPU entre sesiones; si la asignación cambia a mitad de
