@@ -12,20 +12,22 @@ import pytest
 from src.config import ExperimentConfig
 from src.data.splits import FRACCIONES
 from src.experiments.campana import (
+    MODELOS,
     N_CELDAS_BASELINE_TASK12,
     N_CELDAS_TOTAL,
-    MODELOS,
     ClaveCelda,
+    _actualizar_celda_estado,
+    _inicializar_estado_celdas,
+    archivar_corridas_no_cuda,
+    cargar_estado_campana,
     comparar_costo,
     generar_celdas_design,
     guardar_estado_campana,
     orden_modelos,
     verificar_integridad,
     verificar_precondiciones,
-    _actualizar_celda_estado,
-    _inicializar_estado_celdas,
 )
-from src.logging.records import COLUMNAS_CSV, RunRecord
+from src.logging.records import RunRecord
 from src.logging.sinks import escribir_corrida_csv, escribir_historial_json
 
 
@@ -53,16 +55,18 @@ def _registro_campana(
     fold: int = 0,
     train_time_s: float = 100.0,
     n_capas_vqc: int | None = None,
+    dispositivo: str = "cpu",
+    epocas: int = 15,
 ) -> RunRecord:
     return RunRecord(
         modelo=modelo,
         data_fraction=data_fraction,
         fold=fold,
         semilla=42,
-        dispositivo="cpu",
+        dispositivo=dispositivo,
         n_train=100,
         n_val=25,
-        epocas=15,
+        epocas=epocas,
         n_params_entrenables=5124,
         n_capas_vqc=n_capas_vqc,
         commit_sha="abc1234",
@@ -218,6 +222,122 @@ def test_verificar_integridad_falla_con_celdas_faltantes(tmp_path: Path) -> None
 
     with pytest.raises(AssertionError, match="faltantes"):
         verificar_integridad(cfg)
+
+
+def test_verificar_precondiciones_admite_baselines_archivadas(tmp_path: Path) -> None:
+    """Con las corridas MPS archivadas (D3), la campaña arranca sin ellas en el CSV."""
+    cfg = _cfg(tmp_path)
+    cfg.ensure_layout()
+    hparams = {"n_capas": 6, "presupuesto": {"decision": "go", "horas_campana_estimadas": 100.0}}
+
+    with (
+        patch("src.experiments.campana.cargar_hparams_congelados", return_value=hparams),
+        patch("src.experiments.campana.cargar_splits", return_value={}) as splits,
+    ):
+        resultado = verificar_precondiciones(cfg, exigir_baselines=False)
+
+    assert resultado["n_capas"] == 6
+    assert resultado["n_baselines_100"] == 0
+    splits.assert_called_once()
+
+
+def test_archivar_corridas_no_cuda_separa_y_conserva(tmp_path: Path) -> None:
+    cfg = _cfg(tmp_path)
+    cfg.ensure_layout()
+    ruta_csv = cfg.raiz_resultados / "experiments.csv"
+
+    for fold in range(5):
+        for modelo in ("efficientnet_b0", "resnet50"):
+            registro = _registro_campana(
+                modelo=modelo,
+                data_fraction=1.0,
+                fold=fold,
+                dispositivo="mps",
+            )
+            escribir_corrida_csv(registro, ruta_csv)
+            escribir_historial_json(registro, [], cfg)
+
+    sonda = _registro_campana(data_fraction=0.10, fold=0, dispositivo="mps", epocas=1)
+    escribir_corrida_csv(sonda, ruta_csv)
+    escribir_historial_json(sonda, [], cfg)
+
+    en_cuda = _registro_campana(data_fraction=0.25, fold=1, dispositivo="cuda")
+    escribir_corrida_csv(en_cuda, ruta_csv)
+    escribir_historial_json(en_cuda, [], cfg)
+
+    hparams = {"presupuesto": {"horas_campana_estimadas": 100.0}}
+    with patch("src.experiments.campana.cargar_hparams_congelados", return_value=hparams):
+        resumen = archivar_corridas_no_cuda(cfg)
+
+    assert resumen["historicas"] == 10
+    assert resumen["informales"] == 1
+    assert resumen["conservadas"] == 1
+    assert resumen["historiales_movidos"] == 11
+
+    with ruta_csv.open(newline="", encoding="utf-8") as archivo:
+        filas = list(csv.DictReader(archivo))
+    assert [fila["dispositivo"] for fila in filas] == ["cuda"]
+
+    ruta_historico = cfg.raiz_resultados / "historico_mps.csv"
+    ruta_informales = cfg.raiz_resultados / "pruebas_informales.csv"
+    with ruta_historico.open(newline="", encoding="utf-8") as arch:
+        assert len(list(csv.DictReader(arch))) == 10
+    with ruta_informales.open(newline="", encoding="utf-8") as arch:
+        assert len(list(csv.DictReader(arch))) == 1
+
+    archivados = list((cfg.raiz_resultados / "history_mps").glob("*.json"))
+    assert len(archivados) == 11
+    assert list((cfg.raiz_resultados / "history").glob("*.json")) != []
+
+
+def test_archivar_corridas_no_cuda_repone_celdas_pendientes(tmp_path: Path) -> None:
+    """Las celdas archivadas vuelven a pendiente para que no se omitan por reanudabilidad."""
+    cfg = _cfg(tmp_path)
+    cfg.ensure_layout()
+    ruta_csv = cfg.raiz_resultados / "experiments.csv"
+
+    registro = _registro_campana(data_fraction=1.0, fold=0, dispositivo="mps")
+    escribir_corrida_csv(registro, ruta_csv)
+
+    celdas = _inicializar_estado_celdas(cfg)
+    _actualizar_celda_estado(celdas, ("efficientnet_b0", 1.0, 0), estado="completada")
+
+    hparams = {"presupuesto": {"horas_campana_estimadas": 100.0}}
+    with patch("src.experiments.campana.cargar_hparams_congelados", return_value=hparams):
+        guardar_estado_campana(cfg, celdas, hparams=hparams)
+        archivar_corridas_no_cuda(cfg)
+
+        estado = cargar_estado_campana(cfg)
+
+    assert estado is not None
+    celda = next(
+        c
+        for c in estado["celdas"]
+        if (c["modelo"], c["data_fraction"], c["fold"]) == ("efficientnet_b0", 1.0, 0)
+    )
+    assert celda["estado"] == "pendiente"
+    assert estado["resumen"]["completadas"] == 0
+
+
+def test_archivar_corridas_no_cuda_es_idempotente(tmp_path: Path) -> None:
+    cfg = _cfg(tmp_path)
+    cfg.ensure_layout()
+    escribir_corrida_csv(
+        _registro_campana(dispositivo="cuda"),
+        cfg.raiz_resultados / "experiments.csv",
+    )
+
+    hparams = {"presupuesto": {"horas_campana_estimadas": 100.0}}
+    with patch("src.experiments.campana.cargar_hparams_congelados", return_value=hparams):
+        resumen = archivar_corridas_no_cuda(cfg)
+
+    assert resumen == {
+        "conservadas": 1,
+        "historicas": 0,
+        "informales": 0,
+        "historiales_movidos": 0,
+    }
+    assert not (cfg.raiz_resultados / "historico_mps.csv").exists()
 
 
 def test_fracciones_campana_coinciden_con_splits() -> None:

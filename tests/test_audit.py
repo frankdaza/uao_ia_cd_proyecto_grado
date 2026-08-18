@@ -16,6 +16,7 @@ from src.data.audit import (
     aplicar_exclusiones,
     construir_manifiesto,
     sha256_archivo,
+    verificar_arbol_contra_manifiesto,
 )
 
 
@@ -144,3 +145,47 @@ def test_sha256_archivo_coincide_con_contenido(tmp_path: Path) -> None:
     ruta = tmp_path / "prueba.jpg"
     ruta.write_bytes(contenido)
     assert sha256_archivo(ruta) == digest_esperado
+
+
+def test_verificar_arbol_contra_manifiesto_ok(raiz_mini: Path) -> None:
+    manifiesto, _ = construir_manifiesto(raiz_mini)
+    resultado = verificar_arbol_contra_manifiesto(raiz_mini, manifiesto)
+
+    assert resultado["presentes"] == len(manifiesto)
+    assert resultado["hash_ok"] == len(manifiesto)
+    assert resultado["faltantes"] == []
+    assert resultado["hash_distinto"] == []
+
+
+def test_verificar_arbol_detecta_faltante_y_hash_distinto(tmp_path: Path) -> None:
+    raiz = tmp_path / "dataset"
+    digest = _guardar_jpg(raiz / "Training/glioma/ok.jpg")
+    manifiesto = pd.DataFrame([_fila("Training/glioma/ok.jpg", digest=digest)])
+
+    resultado = verificar_arbol_contra_manifiesto(raiz, manifiesto)
+    assert resultado["hash_ok"] == 1
+
+    manifiesto_falta = pd.DataFrame(
+        [
+            _fila("Training/glioma/ok.jpg", digest=digest),
+            _fila("Training/glioma/ausente.jpg", digest="f" * 64),
+        ]
+    )
+    resultado_falta = verificar_arbol_contra_manifiesto(raiz, manifiesto_falta)
+    assert resultado_falta["faltantes"] == ["Training/glioma/ausente.jpg"]
+
+    _guardar_jpg(raiz / "Training/glioma/mal.jpg", (99, 99, 99))
+    manifiesto_mal = pd.DataFrame(
+        [_fila("Training/glioma/mal.jpg", digest="0" * 64)]
+    )
+    resultado_mal = verificar_arbol_contra_manifiesto(raiz, manifiesto_mal)
+    assert resultado_mal["hash_distinto"] == ["Training/glioma/mal.jpg"]
+
+
+def test_verificar_arbol_reporta_extras_sin_abortar(raiz_mini: Path) -> None:
+    manifiesto, _ = construir_manifiesto(raiz_mini)
+    (raiz_mini / ".DS_Store").write_text("metadata")
+    resultado = verificar_arbol_contra_manifiesto(raiz_mini, manifiesto)
+
+    assert ".DS_Store" in resultado["extras"]
+    assert resultado["hash_ok"] == len(manifiesto)

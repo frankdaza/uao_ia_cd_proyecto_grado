@@ -71,7 +71,7 @@ desde \texttt{results/figures/}.
 \textbf{Fragmento} & \textbf{Tareas} \\\hline
 \texttt{h0\_fundamentos.tex} & 1, 2, 3, 4, 5, 6 \\\hline
 \texttt{h1\_arquitectura.tex} & 7, 8, 9, 10, 11 \\\hline
-\texttt{h2\_experimentacion.tex} & 12, 13 \\\hline
+\texttt{h2\_experimentacion.tex} & 12, 13, 20 \\\hline
 \texttt{h3\_analisis.tex} & 14, 15, 16 \\\hline
 \end{tabularx}
 
@@ -112,6 +112,26 @@ Esta sección consolida las decisiones congeladas a medida que avanza el proyect
               en Colab/CUDA (TASK-13) antes de las 60 celdas.
         \item Sin recorte de épocas sin evidencia de convergencia; D2 (HQCNN al 100\,\%) se confirma tras re-extrapolar.
         \item Historiales por $L$ en \texttt{results/history/} con sufijo \texttt{\_L\{n\}}.
+    \end{itemize}
+    \item \textbf{D3} --- Entorno de ejecución de la campaña y homogeneidad de hardware (tareas 20 y 13).
+    Ver~\ref{hallazgo:task-20}.
+    \begin{itemize}
+        \item Runtime único de entrenamiento: Google Colab Pro+ con GPU \texttt{cuda}, recurso
+              ya declarado en el anteproyecto (Tecnologías Duras). El equipo local queda reservado
+              para análisis y redacción.
+        \item Las 60 celdas del diseño factorial se ejecutan en el mismo dispositivo: ninguna celda
+              que entre al análisis proviene de \texttt{mps} ni de \texttt{cpu}.
+        \item Las 10 corridas al 100\,\% de la tarea 12, medidas en \texttt{mps}, se archivan en
+              \texttt{results/historico\_mps.csv} (historiales en \texttt{results/history\_mps/})
+              y se reejecutan en CUDA.
+        \item Motivo: A9 exige reportar tiempo de entrenamiento y latencia de inferencia. Con hardware
+              mezclado esas métricas quedarían confundidas con el dispositivo justo en la fracción
+              del 100\,\%, que es donde se contrasta el HQCNN contra las líneas base.
+        \item La sonda local de 1 época se archiva en \texttt{results/pruebas\_informales.csv}: sale del
+              CSV oficial sin borrarse, para que la reanudabilidad no la confunda con una celda válida.
+        \item Costo de la homogeneidad: $\sim$1.5--3 h de GPU, frente a las $\sim$130 h del bloque HQCNN.
+        \item La compuerta abierta en D2 (\textit{go} condicionado a sonda en \texttt{colab\_cuda}) se cierra
+              con la re-extrapolación registrada en \texttt{results/selected\_hparams.json}.
     \end{itemize}
 \end{itemize}
 

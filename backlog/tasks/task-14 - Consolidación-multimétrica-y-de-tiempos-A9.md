@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:12'
-updated_date: '2026-08-17 01:12'
+updated_date: '2026-08-18 01:56'
 labels:
   - estadistica
   - bitacora
@@ -133,4 +133,8 @@ uv run python -m src.analysis.consolidar
 - Redondear solo en la presentación. Nunca sobrescribir el CSV con valores redondeados: el análisis de task-15 necesita la precisión completa.
 - Ningún valor de la tabla debe escribirse a mano. Una tabla LaTeX editada manualmente se desincroniza del CSV en la primera corrección y nadie lo nota hasta la defensa.
 - El tiempo de inferencia solo es comparable si todas las celdas se midieron en el mismo dispositivo. Si la campaña mezcló CPU, MPS y CUDA, hay que segmentar la comparación por dispositivo o la conclusión de costo será inválida.
+
+**Entorno de ejecución (TASK-20).** Esta tarea se ejecuta en **CPU**: local con `uv run` o runtime de Colab sin GPU. Consolidar un CSV y generar tablas no requiere acelerador, y gastar unidades de cómputo de Colab Pro+ aquí resta presupuesto al bloque HQCNN de task-13.
+
+Con la campaña homogénea en CUDA (decisión D3), las columnas `train_time_s` e `inference_ms_per_batch` de las 60 filas son comparables entre sí. Las corridas MPS archivadas en `results/historico_mps.csv` **no** entran en la consolidación: aparecerían como una segunda observación de celdas ya presentes y con hardware distinto.
 <!-- SECTION:NOTES:END -->

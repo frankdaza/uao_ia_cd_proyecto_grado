@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:14'
-updated_date: '2026-08-17 01:14'
+updated_date: '2026-08-18 01:56'
 labels:
   - estadistica
   - bitacora
@@ -164,4 +164,8 @@ uv run python -m src.analysis.estadistica
 - Reportar solo el valor p sin el tamaño del efecto ni los intervalos de confianza es insuficiente para un trabajo publicable, e invita a sobreinterpretar diferencias que están dentro del ruido.
 
 **Frontera de la afirmación.** La conclusión defendible tiene esta forma: en este dataset, con este extractor congelado y esta configuración de 4 qubits simulados, la interacción entre modelo y fracción de datos fue (o no fue) estadísticamente detectable, con este tamaño de efecto y bajo estas limitaciones de independencia.
+
+**Entorno de ejecución (TASK-20).** Esta tarea se ejecuta en **CPU**: local con `uv run` o runtime de Colab sin GPU. ANOVA, Tukey HSD y pruebas de supuestos no requieren acelerador; el presupuesto de Colab Pro+ se reserva para la campaña de task-13.
+
+El análisis parte exclusivamente de las 60 filas en CUDA. Ni las corridas MPS archivadas ni la sonda local de 1 época entran al modelo: mezclar presupuestos de época o dispositivos introduciría una fuente de variación no controlada que la ANOVA atribuiría al modelo.
 <!-- SECTION:NOTES:END -->

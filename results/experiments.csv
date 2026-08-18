@@ -1,0 +1,1 @@
+modelo,data_fraction,fold,semilla,dispositivo,n_train,n_val,epocas,n_params_entrenables,n_capas_vqc,commit_sha,timestamp,accuracy_train,accuracy_val,loss_train,loss_val,f1_val_weighted,f1_val_macro,sens_glioma,sens_meningioma,sens_pituitary,sens_notumor,spec_glioma,spec_meningioma,spec_pituitary,spec_notumor,train_time_s,inference_ms_per_batch,brecha_g

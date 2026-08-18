@@ -64,7 +64,14 @@ results/figures/*
 !results/figures/ejemplos_aumento.png
 !results/figures/ablacion_L_curvas_perdida.png
 !results/ablacion_L.csv
+!results/experiments.csv
 !results/selected_hparams.json
 !results/history/
 results/history/*
 !results/history/*.json
+## Evidencia archivada por la decisión D3 (corridas fuera de la campaña en CUDA):
+!results/historico_mps.csv
+!results/pruebas_informales.csv
+!results/history_mps/
+results/history_mps/*
+!results/history_mps/*.json

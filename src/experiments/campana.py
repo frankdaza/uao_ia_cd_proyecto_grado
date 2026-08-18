@@ -18,7 +18,7 @@ from src.config import ExperimentConfig, cargar_hparams_congelados, n_capas_cong
 from src.data.splits import FRACCIONES, cargar_splits
 from src.experiments.ablacion_L import get_device_hqcnn
 from src.experiments.baselines import FRACCION_BASELINE, MODELOS_BASELINE, verificar_indices_fold
-from src.logging.records import RunRecord
+from src.logging.records import COLUMNAS_CSV, RunRecord
 from src.logging.sinks import (
     escribir_corrida_csv,
     escribir_historial_json,
@@ -39,6 +39,12 @@ FRACCION_COMPLETA: float = 1.0
 N_CELDAS_TOTAL: int = len(MODELOS) * len(FRACCIONES) * 5
 N_CELDAS_BASELINE_TASK12: int = len(MODELOS_BASELINE) * 5
 RUTA_ESTADO: str = "campana_estado.json"
+RUTA_HPARAMS: str = "selected_hparams.json"
+
+DISPOSITIVO_CAMPANA: str = "cuda"
+RUTA_HISTORICO_NO_CUDA: str = "historico_mps.csv"
+RUTA_PRUEBAS_INFORMALES: str = "pruebas_informales.csv"
+DIR_HISTORIAL_ARCHIVADO: str = "history_mps"
 
 ClaveCelda = tuple[str, float, int]
 EstadoCelda = Literal["completada", "omitida", "fallida", "pendiente"]
@@ -189,13 +195,45 @@ def _contar_baselines_al_100(ruta_csv: Path) -> int:
     return conteo
 
 
-def verificar_precondiciones(cfg: ExperimentConfig) -> dict[str, Any]:
+def _ruta_hparams(cfg: ExperimentConfig) -> Path:
+    """Resuelve ``selected_hparams.json`` desde la configuración, no desde el CWD.
+
+    Parameters
+    ----------
+    cfg : ExperimentConfig
+        Configuración con la raíz de resultados.
+
+    Returns
+    -------
+    Path
+        Ruta al JSON de hiperparámetros congelados.
+
+    Notes
+    -----
+    En Colab el cuaderno puede montar ``results/`` fuera del directorio de trabajo;
+    resolver la ruta desde ``cfg`` evita que la campaña arranque con la ``L``
+    equivocada o falle en silencio.
+    """
+    return cfg.raiz_resultados / RUTA_HPARAMS
+
+
+def verificar_precondiciones(
+    cfg: ExperimentConfig,
+    *,
+    exigir_baselines: bool = True,
+) -> dict[str, Any]:
     """Comprueba artefactos previos antes de lanzar la campaña.
 
     Parameters
     ----------
     cfg : ExperimentConfig
         Configuración con rutas de resultados.
+    exigir_baselines : bool
+        Si ``True``, exige las celdas baseline al 100 % de TASK-12 en el CSV.
+        Se desactiva cuando esas corridas fueron archivadas por heterogeneidad
+        de hardware y se reejecutarán dentro de la propia campaña (decisión D3).
+        La validación de ``L`` congelada y del hash de ``splits.json`` se
+        mantiene en ambos casos.
 
     Returns
     -------
@@ -207,10 +245,10 @@ def verificar_precondiciones(cfg: ExperimentConfig) -> dict[str, Any]:
     FileNotFoundError
         Si faltan ``selected_hparams.json`` o ``splits.json``.
     ValueError
-        Si no hay suficientes celdas baseline de TASK-12.
+        Si se exigen las celdas baseline de TASK-12 y no están completas.
     """
     cfg.ensure_layout()
-    hparams = cargar_hparams_congelados()
+    hparams = cargar_hparams_congelados(_ruta_hparams(cfg))
     l_congelada = int(hparams["n_capas"])
 
     ruta_splits = cfg.raiz_resultados / "splits.json"
@@ -218,10 +256,11 @@ def verificar_precondiciones(cfg: ExperimentConfig) -> dict[str, Any]:
 
     ruta_csv = cfg.raiz_resultados / "experiments.csv"
     n_baselines = _contar_baselines_al_100(ruta_csv)
-    if n_baselines < N_CELDAS_BASELINE_TASK12:
+    if exigir_baselines and n_baselines < N_CELDAS_BASELINE_TASK12:
         raise ValueError(
             f"Faltan celdas baseline al 100%: {n_baselines}/{N_CELDAS_BASELINE_TASK12}. "
-            "Ejecuta TASK-12 antes de la campaña."
+            "Ejecuta TASK-12 antes de la campaña, o usa --sin-baselines-previas "
+            "si fueron archivadas para reejecutarse en CUDA."
         )
 
     presupuesto = hparams.get("presupuesto", {})
@@ -324,7 +363,7 @@ def comparar_costo(
     CostoCampana
         Horas reales, estimadas y desviación porcentual.
     """
-    hparams = hparams or cargar_hparams_congelados()
+    hparams = hparams or cargar_hparams_congelados(_ruta_hparams(cfg))
     horas_estimadas = float(hparams.get("presupuesto", {}).get("horas_campana_estimadas", 0.0))
 
     ruta_csv = cfg.raiz_resultados / "experiments.csv"
@@ -547,6 +586,134 @@ def _actualizar_celda_estado(
         celdas[indice] = {**celdas[indice], **entrada}
 
 
+def _escribir_archivo_corridas(filas: list[dict[str, str]], ruta: Path) -> None:
+    """Añade filas archivadas a un CSV auxiliar, creando la cabecera si hace falta."""
+    if not filas:
+        return
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    escribir_cabecera = not ruta.exists() or ruta.stat().st_size == 0
+    with ruta.open("a", newline="", encoding="utf-8") as archivo:
+        escritor = csv.DictWriter(archivo, fieldnames=COLUMNAS_CSV)
+        if escribir_cabecera:
+            escritor.writeheader()
+        escritor.writerows(filas)
+
+
+def archivar_corridas_no_cuda(
+    cfg: ExperimentConfig,
+    *,
+    dispositivo_objetivo: str = DISPOSITIVO_CAMPANA,
+) -> dict[str, Any]:
+    """Retira del CSV oficial las corridas ajenas a la campaña en CUDA (decisión D3).
+
+    Parameters
+    ----------
+    cfg : ExperimentConfig
+        Configuración con rutas de resultados y el presupuesto de épocas del protocolo.
+    dispositivo_objetivo : str
+        Dispositivo con el que se ejecuta la campaña completa.
+
+    Returns
+    -------
+    dict[str, Any]
+        Conteos por categoría y rutas de los archivos generados.
+
+    Notes
+    -----
+    Separa en dos categorías y **no elimina** ninguna evidencia:
+
+    - Pruebas informales: presupuesto de épocas distinto al del protocolo
+      (por ejemplo la sonda de 1 época). Van a ``pruebas_informales.csv``.
+    - Corridas heterogéneas: presupuesto correcto pero dispositivo distinto al
+      objetivo (las líneas base de TASK-12 en ``mps``). Van a ``historico_mps.csv``.
+
+    Los historiales por época de ambas categorías se mueven a ``history_mps/``.
+    Las celdas afectadas vuelven a ``pendiente`` en ``campana_estado.json``, de modo
+    que ``Trainer.corrida_completada()`` no las omita por reanudabilidad.
+
+    Los pesos en ``models/`` no se archivan: la convención de nombres de TASK-4 no
+    incluye el dispositivo, así que la reejecución los sobrescribe. La evidencia
+    conservada de las corridas retiradas es su fila en el CSV y su historial.
+    """
+    cfg.ensure_layout()
+    ruta_csv = cfg.raiz_resultados / "experiments.csv"
+    if not ruta_csv.exists():
+        logger.info("No hay experiments.csv que archivar en %s", ruta_csv)
+        return {"conservadas": 0, "historicas": 0, "informales": 0, "historiales_movidos": 0}
+
+    with ruta_csv.open(newline="", encoding="utf-8") as archivo:
+        filas = list(csv.DictReader(archivo))
+
+    conservadas: list[dict[str, str]] = []
+    historicas: list[dict[str, str]] = []
+    informales: list[dict[str, str]] = []
+
+    for fila in filas:
+        if int(fila["epocas"]) != cfg.epocas:
+            informales.append(fila)
+        elif fila["dispositivo"] != dispositivo_objetivo:
+            historicas.append(fila)
+        else:
+            conservadas.append(fila)
+
+    if not historicas and not informales:
+        logger.info("Nada que archivar: las %d filas ya son de la campaña", len(conservadas))
+        return {
+            "conservadas": len(conservadas),
+            "historicas": 0,
+            "informales": 0,
+            "historiales_movidos": 0,
+        }
+
+    _escribir_archivo_corridas(historicas, cfg.raiz_resultados / RUTA_HISTORICO_NO_CUDA)
+    _escribir_archivo_corridas(informales, cfg.raiz_resultados / RUTA_PRUEBAS_INFORMALES)
+
+    with ruta_csv.open("w", newline="", encoding="utf-8") as archivo:
+        escritor = csv.DictWriter(archivo, fieldnames=COLUMNAS_CSV)
+        escritor.writeheader()
+        escritor.writerows(conservadas)
+
+    directorio_origen = cfg.raiz_resultados / "history"
+    directorio_destino = cfg.raiz_resultados / DIR_HISTORIAL_ARCHIVADO
+    directorio_destino.mkdir(parents=True, exist_ok=True)
+
+    movidos = 0
+    for fila in historicas + informales:
+        nombre = nombre_historial(_run_record_desde_fila(fila))
+        origen = directorio_origen / nombre
+        if origen.is_file():
+            origen.replace(directorio_destino / nombre)
+            movidos += 1
+
+    estado_previo = cargar_estado_campana(cfg)
+    celdas_estado: list[FilaEstadoCelda] = (
+        estado_previo["celdas"] if estado_previo else _inicializar_estado_celdas(cfg)
+    )
+    for fila in historicas + informales:
+        _actualizar_celda_estado(celdas_estado, _clave_celda(fila), estado="pendiente")
+    guardar_estado_campana(cfg, celdas_estado)
+
+    logger.info(
+        "Archivado D3: %d corridas heterogéneas, %d pruebas informales, "
+        "%d historiales movidos; quedan %d filas en el CSV oficial",
+        len(historicas),
+        len(informales),
+        movidos,
+        len(conservadas),
+    )
+    return {
+        "conservadas": len(conservadas),
+        "historicas": len(historicas),
+        "informales": len(informales),
+        "historiales_movidos": movidos,
+        "rutas": {
+            "historico": cfg.raiz_resultados / RUTA_HISTORICO_NO_CUDA,
+            "informales": cfg.raiz_resultados / RUTA_PRUEBAS_INFORMALES,
+            "historiales": directorio_destino,
+        },
+    }
+
+
 def ejecutar_campana(
     cfg_base: ExperimentConfig | None = None,
     *,
@@ -555,6 +722,7 @@ def ejecutar_campana(
     fold: int | None = None,
     max_epocas: int | None = None,
     verificar_pre: bool = True,
+    exigir_baselines: bool = True,
 ) -> dict[str, Any]:
     """Ejecuta el diseño factorial con reanudabilidad por celda.
 
@@ -572,6 +740,10 @@ def ejecutar_campana(
         Presupuesto reducido de épocas (sondas).
     verificar_pre : bool
         Si ``True``, ejecuta ``verificar_precondiciones`` al inicio.
+    exigir_baselines : bool
+        Si ``False``, no exige las celdas baseline de TASK-12 en el CSV porque
+        fueron archivadas para reejecutarse en CUDA (decisión D3). Sigue validando
+        la ``L`` congelada y el hash de ``splits.json``.
 
     Returns
     -------
@@ -583,9 +755,9 @@ def ejecutar_campana(
 
     hparams: dict[str, Any] | None = None
     if verificar_pre:
-        hparams = verificar_precondiciones(cfg_base)
+        hparams = verificar_precondiciones(cfg_base, exigir_baselines=exigir_baselines)
 
-    L = n_capas_congelada()
+    L = n_capas_congelada(_ruta_hparams(cfg_base))
     if max_epocas is not None:
         cfg_base = replace(cfg_base, epocas=max_epocas)
 
@@ -741,6 +913,23 @@ def _parsear_args() -> argparse.Namespace:
         action="store_true",
         help="Solo verifica integridad del diseno (60 celdas).",
     )
+    parser.add_argument(
+        "--sin-baselines-previas",
+        action="store_true",
+        help=(
+            "No exige las 10 celdas baseline al 100%% de TASK-12 en el CSV: "
+            "fueron archivadas y se reejecutan en CUDA (decision D3). "
+            "Sigue validando L congelada y el hash de splits.json."
+        ),
+    )
+    parser.add_argument(
+        "--archivar-no-cuda",
+        action="store_true",
+        help=(
+            "Solo archiva las corridas ajenas a la campana en CUDA "
+            "(dispositivo distinto o presupuesto de epocas distinto) y termina."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -750,6 +939,10 @@ def main() -> None:
     args = _parsear_args()
 
     cfg = ExperimentConfig()
+
+    if args.archivar_no_cuda:
+        archivar_corridas_no_cuda(cfg)
+        return
 
     if args.verificar:
         verificar_precondiciones(cfg)
@@ -782,6 +975,7 @@ def main() -> None:
         modelo=modelo,
         fold=fold,
         max_epocas=max_epocas,
+        exigir_baselines=not args.sin_baselines_previas,
     )
 
 

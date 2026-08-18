@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:14'
-updated_date: '2026-08-17 01:14'
+updated_date: '2026-08-18 01:56'
 labels:
   - estadistica
   - bitacora
@@ -130,4 +130,8 @@ uv run python -m src.analysis.curvas
 - Una `G` baja con exactitud baja es subajuste, no generalización. Es el error de lectura más frecuente de esta métrica y debe quedar explícitamente descartado en el texto.
 - Al 10 % la exactitud de entrenamiento puede llegar a 1.0 con muy pocas imágenes, saturando `G`. Con saturación, las comparaciones entre modelos pierden sensibilidad: mencionarlo si ocurre.
 - Mantener escalas idénticas entre figuras del mismo tipo. Ejes autoescalados hacen que dos modelos parezcan distintos por el encuadre y no por los datos.
+
+**Entorno de ejecución (TASK-20).** Esta tarea se ejecuta en **CPU**: local con `uv run` o runtime de Colab sin GPU. Las curvas se reconstruyen desde `results/history/` sin reentrenar, así que no requiere acelerador.
+
+Los historiales de las corridas MPS quedan archivados en `results/history_mps/` y no se grafican: las curvas del capítulo provienen únicamente de las 60 celdas ejecutadas en CUDA con el mismo presupuesto de 15 épocas.
 <!-- SECTION:NOTES:END -->

@@ -7,6 +7,7 @@ import logging
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypedDict
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -70,6 +71,79 @@ def descubrir_extensiones(raiz: Path) -> dict[str, int]:
         if ruta.is_file():
             conteo[ruta.suffix.lower()] += 1
     return dict(sorted(conteo.items()))
+
+
+class ResumenVerificacionArbol(TypedDict):
+    """Resultado de comparar un árbol de imágenes contra el manifiesto auditado."""
+
+    presentes: int
+    faltantes: list[str]
+    hash_ok: int
+    hash_distinto: list[str]
+    extras: list[str]
+
+
+def verificar_arbol_contra_manifiesto(
+    raiz: Path,
+    manifiesto: pd.DataFrame,
+) -> ResumenVerificacionArbol:
+    """Comprueba que cada fila del manifiesto exista en ``raiz`` con el mismo SHA-256.
+
+    Parameters
+    ----------
+    raiz : Path
+        Directorio raíz del dataset (``Training/`` y ``Testing/``).
+    manifiesto : pd.DataFrame
+        Manifiesto auditado con columnas ``ruta_relativa`` y ``sha256``.
+
+    Returns
+    -------
+    ResumenVerificacionArbol
+        Conteos y listas de rutas faltantes, con hash distinto o archivos extra.
+        Los extras (p. ej. ``.DS_Store``) se reportan pero no invalidan por sí solos;
+        faltantes o hash distinto implican que el árbol no coincide con TASK-3.
+
+    Notes
+    -----
+    Usado en Colab tras copiar el dataset desde Drive al disco local del runtime,
+    antes de entrenar, para no romper el hash de ``splits.json``.
+    """
+    raiz = raiz.resolve()
+    faltantes: list[str] = []
+    hash_distinto: list[str] = []
+    presentes = 0
+    hash_ok = 0
+
+    rutas_esperadas: set[str] = set()
+    for _, fila in manifiesto.iterrows():
+        relativa = str(fila["ruta_relativa"])
+        rutas_esperadas.add(relativa)
+        destino = raiz / relativa
+        if not destino.is_file():
+            faltantes.append(relativa)
+            continue
+        presentes += 1
+        digest = sha256_archivo(destino)
+        if digest != str(fila["sha256"]):
+            hash_distinto.append(relativa)
+        else:
+            hash_ok += 1
+
+    extras: list[str] = []
+    for ruta in sorted(raiz.rglob("*")):
+        if not ruta.is_file():
+            continue
+        relativa = ruta.relative_to(raiz).as_posix()
+        if relativa not in rutas_esperadas:
+            extras.append(relativa)
+
+    return {
+        "presentes": presentes,
+        "faltantes": faltantes,
+        "hash_ok": hash_ok,
+        "hash_distinto": hash_distinto,
+        "extras": extras,
+    }
 
 
 def sha256_archivo(ruta: Path, bloque: int = 1 << 20) -> str:

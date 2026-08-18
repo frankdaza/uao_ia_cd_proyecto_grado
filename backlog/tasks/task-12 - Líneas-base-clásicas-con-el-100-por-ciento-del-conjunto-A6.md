@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Frank Daza
 created_date: '2026-08-17 01:10'
-updated_date: '2026-08-17 23:04'
+updated_date: '2026-08-18 01:56'
 labels:
   - baseline
   - bitacora
@@ -100,6 +100,10 @@ flowchart LR
 - El tiempo de inferencia de las líneas base es la referencia contra la cual se leerá el costo del HQCNN. Medirlo con el mismo protocolo (calentamiento y sincronización) o la comparación de costo será engañosa.
 
 Validacion: 19 passed (test_baseline + test_backbones). 10 filas unicas en experiments.csv (deduplicadas). Sonda MPS ~45s/ep EfficientNet; campana completa ~1.7h en MPS. Acc val media: EfficientNet 93.69%, ResNet 92.03%.
+
+**Addenda (TASK-20 / decisión D3, campaña en Colab Pro+).** Las 10 corridas al 100 % producidas por esta tarea se ejecutaron en `mps`. Como la campaña de task-13 pasa íntegramente a CUDA, esas filas se archivan en `results/historico_mps.csv` (historiales en `results/history_mps/`) y las celdas se reejecutan en GPU para que las 60 del diseño factorial compartan hardware. Sin esa homogeneidad, el tiempo de entrenamiento y la latencia de inferencia que exige A9 quedarían confundidos con el dispositivo justo en la fracción del 100 %.
+
+El protocolo y los criterios de A6 no cambian y la tarea sigue cerrada: lo que se repite es la medición, no el diseño. La evidencia MPS no se elimina y queda referenciada en la bitácora.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

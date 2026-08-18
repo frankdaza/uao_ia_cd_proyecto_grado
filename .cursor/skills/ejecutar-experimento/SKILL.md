@@ -86,6 +86,41 @@ uv run python src/train.py --model hqcnn --data-fraction 0.25 --folds 5
 
 Adaptar según el script existente; nunca ejecutar con `python` del sistema.
 
+**Local queda reservado para análisis y sondas.** El entrenamiento de la campaña factorial (A8) corre en Colab Pro+ (decisión D3).
+
+### Paso 9: Ejecución en Google Colab Pro+ (campaña A8)
+
+Cuaderno canónico: [`notebooks/colab_campana.ipynb`](../../../notebooks/colab_campana.ipynb). Es delgado por diseño: importa `src.experiments.campana` y **no** reimplementa modelos, particiones ni bucles de entrenamiento.
+
+| Aspecto | Regla |
+| :--- | :--- |
+| GPU | **T4**. El cuello de botella es la simulación del VQC con `parameter-shift`, que se evalúa en CPU; una GPU de gama alta acelera el backbone congelado, no el término dominante |
+| Dependencias | Pines del `README` (PyTorch 2.9.1 + cu128, PennyLane 0.45.1). Única excepción a UV |
+| Rutas de Drive | Solo en el cuaderno. `src/` deriva todo de `ExperimentConfig` con `pathlib` |
+| Dataset | Zip de Drive copiado al disco local antes de descomprimir; leer desde Drive domina el tiempo por época |
+| Persistencia | `results/` y `models/` enlazados a Drive. Sembrar desde el repositorio **solo** si Drive está vacío |
+| wandb | `WANDB_MODE=offline` y `wandb sync` al cerrar la sesión |
+| Homogeneidad | Las 60 celdas se ejecutan en `cuda`. Toda corrida con otro dispositivo o con presupuesto de épocas distinto se archiva antes de entrenar |
+
+Secuencia de ejecución:
+
+```bash
+python -m src.experiments.campana --archivar-no-cuda
+python -m src.experiments.campana --modelo hqcnn --fraccion 0.10 --fold 0 \
+    --max-epocas 1 --sin-baselines-previas   # sonda: cierra la compuerta de TASK-11
+python -m src.experiments.campana --archivar-no-cuda
+
+python -m src.experiments.campana --fraccion 1.00 --modelo efficientnet_b0 --sin-baselines-previas
+python -m src.experiments.campana --fraccion 1.00 --modelo resnet50 --sin-baselines-previas
+python -m src.experiments.campana --fraccion 0.10
+python -m src.experiments.campana --fraccion 0.25
+python -m src.experiments.campana --fraccion 0.50
+python -m src.experiments.campana --fraccion 1.00   # HQCNN al 100 %, el bloque más caro
+python -m src.experiments.campana --verificar
+```
+
+Tras cada bloque, actualizar la tabla de estado de ejecución del hallazgo `hallazgo:task-13` en la bitácora con celdas completadas, pendientes, fallidas con motivo y costo acumulado. El registro es incremental, no se difiere al cierre de la campaña.
+
 ## Invocación
 
 > "Ejecutar experimento: entrena HQCNN al 25 % con 4 qubits, L=2, k-fold=5."
